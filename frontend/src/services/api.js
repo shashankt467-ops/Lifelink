@@ -1,5 +1,8 @@
 import { HOSPITALS, DOCTORS, AMBULANCES, BLOOD_BANKS, APPOINTMENTS } from '../data/mockData';
 
+// Production API Base URL configured via environment variable VITE_API_URL
+export const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '');
+
 // Simulated API delay
 const delay = (ms = 600) => new Promise(resolve => setTimeout(resolve, ms));
 
