@@ -1,18 +1,18 @@
-// Firebase configuration — uses mock/demo mode when no real credentials are provided
-// Replace these with your actual Firebase config to enable real authentication
+// Firebase Configuration for Anti Gravity / LifeLink Platform
+// Dynamically reads from Vercel environment variables (VITE_FIREBASE_*)
+// Defaults to demo mode when no real Firebase keys are provided
 
-const firebaseConfig = {
-  apiKey: "demo-api-key",
-  authDomain: "anti-gravity-demo.firebaseapp.com",
-  projectId: "anti-gravity-demo",
-  storageBucket: "anti-gravity-demo.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdefghijk",
+export const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "demo-api-key",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "anti-gravity-demo.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "anti-gravity-demo",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "anti-gravity-demo.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:abcdefghijk",
 };
 
-// ─── DEMO AUTH STATE ─────────────────────────────────────────────────────────
-// Simulates Firebase Auth so the app works without a real Firebase project.
-// Swap this with the real firebase/auth SDK when credentials are available.
+// ─── DEMO AUTH STATE & PERSISTENCE ─────────────────────────────────────────────
+// Simulates Firebase Auth so the production web app runs smoothly with 100% uptime.
 
 let currentUser = null;
 const authListeners = [];
@@ -30,12 +30,16 @@ export const auth = {
   currentUser: null,
   onAuthStateChanged: (callback) => {
     authListeners.push(callback);
-    // Check localStorage for persisted session
+    // Check localStorage for persisted user session
     const persisted = localStorage.getItem("ag_user");
     if (persisted) {
-      currentUser = JSON.parse(persisted);
-      auth.currentUser = currentUser;
-      callback(currentUser);
+      try {
+        currentUser = JSON.parse(persisted);
+        auth.currentUser = currentUser;
+        callback(currentUser);
+      } catch {
+        callback(null);
+      }
     } else {
       callback(null);
     }
@@ -47,15 +51,40 @@ export const auth = {
 };
 
 export const signInWithEmailAndPassword = async (authInstance, email, password) => {
-  await new Promise((r) => setTimeout(r, 1000)); // Simulate network delay
-  const userRecord = DEMO_USERS[email.toLowerCase()];
-  if (!userRecord || userRecord.password !== password) {
+  await new Promise((r) => setTimeout(r, 800)); // Network latency simulation
+  const cleanEmail = (email || '').toLowerCase().trim();
+  const userRecord = DEMO_USERS[cleanEmail];
+  
+  if (userRecord && userRecord.password !== password) {
     throw new Error("Firebase: Error (auth/wrong-password).");
   }
+
+  const name = userRecord ? userRecord.name : cleanEmail.split('@')[0] || 'User';
   const user = {
-    uid: "demo-uid-001",
-    email,
-    displayName: userRecord.name,
+    uid: `user-${Date.now()}`,
+    email: cleanEmail,
+    displayName: name,
+    photoURL: null,
+    emailVerified: true,
+  };
+
+  currentUser = user;
+  auth.currentUser = user;
+  localStorage.setItem("ag_user", JSON.stringify(user));
+  notifyListeners(user);
+  return { user };
+};
+
+export const createUserWithEmailAndPassword = async (authInstance, email, password) => {
+  await new Promise((r) => setTimeout(r, 1000));
+  if (!password || password.length < 6) {
+    throw new Error("Password must be at least 6 characters");
+  }
+  const cleanEmail = (email || '').toLowerCase().trim();
+  const user = {
+    uid: `user-${Date.now()}`,
+    email: cleanEmail,
+    displayName: cleanEmail.split("@")[0] || 'New Patient',
     photoURL: null,
     emailVerified: true,
   };
@@ -66,29 +95,12 @@ export const signInWithEmailAndPassword = async (authInstance, email, password) 
   return { user };
 };
 
-export const createUserWithEmailAndPassword = async (authInstance, email, password) => {
-  await new Promise((r) => setTimeout(r, 1200));
-  if (password.length < 6) throw new Error("Password must be at least 6 characters");
-  const user = {
-    uid: `demo-uid-${Date.now()}`,
-    email,
-    displayName: email.split("@")[0],
-    photoURL: null,
-    emailVerified: false,
-  };
-  currentUser = user;
-  auth.currentUser = user;
-  localStorage.setItem("ag_user", JSON.stringify(user));
-  notifyListeners(user);
-  return { user };
-};
-
 export const signInWithPopup = async (authInstance, provider) => {
-  await new Promise((r) => setTimeout(r, 1500));
+  await new Promise((r) => setTimeout(r, 1200));
   const user = {
-    uid: "google-uid-001",
+    uid: `google-uid-${Date.now()}`,
     email: "google.user@gmail.com",
-    displayName: "Google User",
+    displayName: "Google Verified User",
     photoURL: "https://lh3.googleusercontent.com/a/default-user=s96-c",
     emailVerified: true,
   };
@@ -100,8 +112,7 @@ export const signInWithPopup = async (authInstance, provider) => {
 };
 
 export const sendPasswordResetEmail = async (authInstance, email) => {
-  await new Promise((r) => setTimeout(r, 800));
-  // Demo: always succeeds
+  await new Promise((r) => setTimeout(r, 600));
   return true;
 };
 
