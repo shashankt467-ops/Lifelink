@@ -17,8 +17,24 @@ app = FastAPI(
 import os
 
 # CORS Configuration
-raw_origins = os.getenv("CORS_ORIGINS") or os.getenv("ALLOWED_ORIGINS") or "*"
-origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+default_origins = [
+    "https://lifelink-omega-black.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://localhost:5175",
+    "http://localhost:5176",
+    "http://localhost:5177",
+    "http://localhost:5178",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:8000"
+]
+
+raw_origins = os.getenv("CORS_ORIGINS") or os.getenv("ALLOWED_ORIGINS")
+if raw_origins:
+    env_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+    origins = list(set(default_origins + env_origins))
+else:
+    origins = ["*"] if os.getenv("APP_ENV") != "production" else default_origins
 
 app.add_middleware(
     CORSMiddleware,
