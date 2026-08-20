@@ -222,28 +222,32 @@ function ChangeLocationModal({ isOpen, onClose, currentLocation, onChangeCity, o
 function StatCard({ icon: Icon, label, value, color, bg, index, subtitle }) {
   return (
     <motion.div
-      className="card"
+      className="stat-card"
       variants={fadeUp}
       custom={index}
-      whileHover={{ y: -4, boxShadow: 'var(--shadow-lg)' }}
-      style={{ cursor: 'default' }}
+      whileHover={{ y: -6, z: 20, rotateX: -2, rotateY: 2, boxShadow: 'var(--shadow-3d-md)' }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      style={{ cursor: 'default', transformStyle: 'preserve-3d', perspective: 1000 }}
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4" style={{ transform: 'translateZ(15px)' }}>
         <div
           className="flex items-center justify-center rounded-2xl"
-          style={{ width: 52, height: 52, background: bg, flexShrink: 0 }}
+          style={{
+            width: 54, height: 54, background: bg, flexShrink: 0,
+            boxShadow: `0 8px 20px ${color}35`, transform: 'translateZ(20px)'
+          }}
         >
-          <Icon size={24} color={color} />
+          <Icon size={26} color={color} />
         </div>
-        <div>
-          <p style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1, fontFamily: 'Outfit, sans-serif' }}>
+        <div style={{ transform: 'translateZ(10px)' }}>
+          <p style={{ fontSize: 32, fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1, fontFamily: 'Outfit, sans-serif' }}>
             {value}
           </p>
-          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2, fontWeight: 500 }}>{label}</p>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4, fontWeight: 600 }}>{label}</p>
         </div>
       </div>
-      <div className="flex items-center gap-1 mt-3" style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-        <TrendingUp size={11} color="var(--success)" />
+      <div className="flex items-center gap-1 mt-3" style={{ fontSize: 11, color: 'var(--text-muted)', transform: 'translateZ(8px)' }}>
+        <TrendingUp size={12} color="var(--success)" />
         <span>{subtitle || 'Updated for current city'}</span>
       </div>
     </motion.div>
@@ -254,17 +258,17 @@ function StatCard({ icon: Icon, label, value, color, bg, index, subtitle }) {
 function HospitalCardCompact({ hospital, index, onNavigate, onCall, onViewDetails }) {
   return (
     <motion.div
-      className="card flex flex-col justify-between"
+      className="card flex flex-col justify-between p-5"
       variants={fadeUp}
       custom={index}
-      whileHover={{ y: -3, boxShadow: 'var(--shadow-lg)' }}
-      style={{ position: 'relative', overflow: 'hidden' }}
+      whileHover={{ y: -5, z: 20, boxShadow: 'var(--shadow-3d-md)' }}
+      style={{ position: 'relative', overflow: 'hidden', transformStyle: 'preserve-3d', perspective: 1000 }}
     >
-      <div>
+      <div style={{ transform: 'translateZ(10px)' }}>
         {hospital.emergency && (
           <div
             className="badge badge-danger"
-            style={{ position: 'absolute', top: 14, right: 14, fontSize: 10, fontWeight: 700 }}
+            style={{ position: 'absolute', top: 14, right: 14, fontSize: 10, fontWeight: 800, transform: 'translateZ(15px)' }}
           >
             24/7 EMERGENCY
           </div>
@@ -272,15 +276,15 @@ function HospitalCardCompact({ hospital, index, onNavigate, onCall, onViewDetail
         <div className="flex items-start gap-3">
           <div
             className="flex items-center justify-center rounded-xl"
-            style={{ width: 44, height: 44, background: 'var(--primary-light)', flexShrink: 0 }}
+            style={{ width: 46, height: 46, background: 'var(--primary-light)', flexShrink: 0, transform: 'translateZ(15px)', boxShadow: '0 4px 14px rgba(14,100,255,0.2)' }}
           >
-            <Hospital size={20} color="var(--primary)" />
+            <Hospital size={22} color="var(--primary)" />
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h4 style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)', marginBottom: 2 }}>{hospital.name}</h4>
+          <div style={{ flex: 1, minWidth: 0, transform: 'translateZ(10px)' }}>
+            <h4 style={{ fontWeight: 800, fontSize: 15, color: 'var(--text-primary)', marginBottom: 2, fontFamily: 'Outfit, sans-serif' }}>{hospital.name}</h4>
             <span className="badge badge-primary" style={{ fontSize: 10 }}>{hospital.type}</span>
             <div className="flex items-center gap-3 mt-2" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              <span className="flex items-center gap-1"><MapPin size={11} /> {hospital.distance ? `${hospital.distance.toFixed(1)} km` : 'Nearby'}</span>
+              <span className="flex items-center gap-1"><MapPin size={11} color="var(--primary)" /> {hospital.distance ? `${hospital.distance.toFixed(1)} km` : 'Nearby'}</span>
               <span className="flex items-center gap-1"><Star size={11} color="#f59e0b" fill="#f59e0b" /> {hospital.rating || 4.5}</span>
             </div>
           </div>
@@ -288,12 +292,12 @@ function HospitalCardCompact({ hospital, index, onNavigate, onCall, onViewDetail
         <div className="flex items-center gap-2 mt-3" style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
           <Bed size={13} color="var(--success)" />
           <span>
-            <span style={{ color: 'var(--success)', fontWeight: 600 }}>{hospital.beds?.general || 15}</span> General &middot;{' '}
-            <span style={{ color: 'var(--warning)', fontWeight: 600 }}>{hospital.beds?.icu || 4}</span> ICU
+            <span style={{ color: 'var(--success)', fontWeight: 700 }}>{hospital.beds?.general || 15}</span> General &middot;{' '}
+            <span style={{ color: 'var(--warning)', fontWeight: 700 }}>{hospital.beds?.icu || 4}</span> ICU
           </span>
         </div>
       </div>
-      <div className="flex gap-2 mt-4">
+      <div className="flex gap-2 mt-4" style={{ transform: 'translateZ(15px)' }}>
         <button className="btn btn-outline btn-sm" style={{ flex: 1, fontSize: 11 }} onClick={() => onNavigate(hospital)}>
           <Navigation size={12} /> Navigate
         </button>
@@ -309,26 +313,27 @@ function HospitalCardCompact({ hospital, index, onNavigate, onCall, onViewDetail
 function DoctorCardCompact({ doctor, index, onBook }) {
   return (
     <motion.div
-      className="card flex flex-col justify-between"
+      className="card flex flex-col justify-between p-5"
       variants={fadeUp}
       custom={index}
-      whileHover={{ y: -3, boxShadow: 'var(--shadow-lg)' }}
+      whileHover={{ y: -5, z: 20, boxShadow: 'var(--shadow-3d-md)' }}
+      style={{ transformStyle: 'preserve-3d', perspective: 1000 }}
     >
-      <div>
+      <div style={{ transform: 'translateZ(10px)' }}>
         <div className="flex items-start gap-3">
           <img
             src={doctor.image}
             alt={doctor.name}
-            style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+            style={{ width: 50, height: 50, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid white', boxShadow: '0 4px 14px rgba(0,0,0,0.15)', transform: 'translateZ(15px)' }}
             onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(doctor.name)}&background=0e64ff&color=fff`; }}
           />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h4 style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>{doctor.name}</h4>
+            <h4 style={{ fontWeight: 800, fontSize: 14, color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif' }}>{doctor.name}</h4>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 1 }}>{doctor.specialization}</p>
             <div className="flex items-center gap-2 mt-1">
               <div className="flex items-center gap-1" style={{ fontSize: 11 }}>
                 <Star size={10} color="#f59e0b" fill="#f59e0b" />
-                <span style={{ fontWeight: 600 }}>{doctor.rating}</span>
+                <span style={{ fontWeight: 700 }}>{doctor.rating}</span>
               </div>
               <span
                 className={doctor.available ? 'badge badge-success' : 'badge badge-warning'}
@@ -345,7 +350,7 @@ function DoctorCardCompact({ doctor, index, onBook }) {
       </div>
       <button
         className="btn btn-primary btn-sm"
-        style={{ width: '100%', marginTop: 12, fontSize: 12 }}
+        style={{ width: '100%', marginTop: 12, fontSize: 12, transform: 'translateZ(15px)' }}
         onClick={() => onBook(doctor)}
       >
         <Calendar size={12} />
@@ -362,19 +367,22 @@ function QuickAction({ icon: Icon, label, gradient, onClick, index }) {
       className="card"
       variants={fadeUp}
       custom={index}
-      whileHover={{ y: -5, boxShadow: 'var(--shadow-lg)' }}
-      whileTap={{ scale: 0.97 }}
+      whileHover={{ y: -6, z: 24, boxShadow: 'var(--shadow-3d-md)' }}
+      whileTap={{ scale: 0.96 }}
       onClick={onClick}
-      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: 20, cursor: 'pointer', border: '1px solid var(--border)' }}
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: 22,
+        cursor: 'pointer', border: '1.5px solid var(--border)', transformStyle: 'preserve-3d', perspective: 1000,
+      }}
     >
       <div style={{
-        width: 52, height: 52, borderRadius: 16, background: gradient,
+        width: 56, height: 56, borderRadius: 18, background: gradient,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.2)', transform: 'translateZ(20px)',
       }}>
-        <Icon size={22} color="white" />
+        <Icon size={24} color="white" />
       </div>
-      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', lineHeight: 1.3 }}>{label}</span>
+      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'center', lineHeight: 1.3, transform: 'translateZ(10px)', fontFamily: 'Outfit, sans-serif' }}>{label}</span>
     </motion.button>
   );
 }
