@@ -817,80 +817,77 @@ export default function Dashboard() {
 
           {/* AI Suggestions */}
           <motion.div variants={fadeUp} custom={1}>
-            <div className="card" style={{ height: '100%' }}>
-              <div className="flex items-center gap-3 mb-4">
+            <TiltCard className="card" style={{ height: '100%', padding: 24 }}>
+              <div className="flex items-center gap-3 mb-4" style={{ transform: 'translateZ(10px)' }}>
                 <div style={{
-                  width: 40, height: 40, borderRadius: 13,
+                  width: 44, height: 44, borderRadius: 15,
                   background: 'linear-gradient(135deg,#0bbcb8,#0891b2)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                  boxShadow: '0 8px 20px rgba(11, 188, 184, 0.4)', transform: 'translateZ(20px)',
                 }}>
-                  <Sparkles size={18} color="white" />
+                  <Sparkles size={20} color="white" />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>AI Health Suggestions</h3>
+                  <h3 style={{ fontSize: 16, fontWeight: 800, margin: 0, fontFamily: 'Outfit, sans-serif' }}>AI Health Suggestions</h3>
                   <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0 }}>Personalized for {location?.city || 'you'}</p>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, transform: 'translateZ(12px)' }}>
                 {aiSuggestions.map((s, i) => (
                   <motion.button
                     key={i}
-                    whileHover={{ x: 4 }}
+                    whileHover={{ x: 6, z: 18 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={s.action}
                     style={{
                       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                      padding: '11px 14px', borderRadius: 12, border: '1px solid var(--border)',
-                      background: 'var(--bg-primary)', cursor: 'pointer', width: '100%',
+                      padding: '12px 16px', borderRadius: 14, border: '1.5px solid var(--border)',
+                      background: 'rgba(10,16,32,0.85)', cursor: 'pointer', width: '100%',
+                      transformStyle: 'preserve-3d', boxShadow: '0 4px 14px rgba(0,0,0,0.3)',
                     }}
                   >
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
-                      <span style={{ fontSize: 18 }}>{s.icon}</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                      <span style={{ fontSize: 20, filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }}>{s.icon}</span>
                       {s.label}
                     </span>
-                    <ChevronRight size={15} color="var(--text-muted)" />
+                    <ChevronRight size={16} color="#60a5fa" />
                   </motion.button>
                 ))}
               </div>
-              <div style={{ marginTop: 14, padding: '10px 14px', borderRadius: 12, background: 'var(--primary-light)', border: '1px solid rgba(14,100,255,0.1)' }}>
-                <p style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 500 }}>
-                  <Brain size={13} style={{ display: 'inline', marginRight: 5 }} />
-                  AI analyzed conditions in {location?.city || 'your area'}
+              <div style={{ marginTop: 16, padding: '10px 14px', borderRadius: 14, background: 'var(--primary-light)', border: '1.5px solid rgba(14,100,255,0.3)', transform: 'translateZ(8px)' }}>
+                <p style={{ fontSize: 12, color: '#60a5fa', fontWeight: 600, margin: 0 }}>
+                  <Brain size={14} style={{ display: 'inline', marginRight: 6 }} />
+                  AI analyzed health indicators for {location?.city || 'your area'}
                 </p>
               </div>
-            </div>
+            </TiltCard>
           </motion.div>
 
           {/* Weather + Health Tip */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <motion.div variants={fadeUp} custom={2}>
-              <div style={{
-                borderRadius: 20, padding: 22,
-                background: 'linear-gradient(135deg, rgba(14,100,255,0.08), rgba(11,188,184,0.08))',
-                border: '1px solid rgba(14,100,255,0.12)',
-                backdropFilter: 'blur(10px)',
-              }}>
-                <div className="flex items-center justify-between">
+              <TiltCard className="card" style={{ padding: 24 }}>
+                <div className="flex items-center justify-between" style={{ transform: 'translateZ(10px)' }}>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <MapPin size={13} color="var(--primary)" />
-                      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      <MapPin size={14} color="#60a5fa" />
+                      <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                         {weather?.city ? `${weather.city}, ${weather.state}` : `${location?.city}, ${location?.state}`}
                       </p>
                     </div>
-                    <div className="flex items-end gap-2">
-                      <span style={{ fontSize: 44, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1, fontFamily: 'Outfit, sans-serif' }}>
+                    <div className="flex items-end gap-2" style={{ transform: 'translateZ(14px)' }}>
+                      <span style={{ fontSize: 46, fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1, fontFamily: 'Outfit, sans-serif' }}>
                         {weather?.temp !== undefined ? weather.temp : 26}&deg;
                       </span>
-                      <span style={{ fontSize: 18, color: 'var(--text-secondary)', marginBottom: 5 }}>C</span>
+                      <span style={{ fontSize: 20, color: 'var(--text-secondary)', marginBottom: 6, fontWeight: 700 }}>C</span>
                     </div>
-                    <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 4, fontWeight: 500 }}>
+                    <p style={{ fontSize: 14, color: '#60a5fa', marginTop: 4, fontWeight: 600 }}>
                       {weather?.condition || 'Partly Cloudy'}
                     </p>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 52, lineHeight: 1 }}>{weather?.icon || '⛅'}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <div style={{ textAlign: 'right', transform: 'translateZ(24px)' }}>
+                    <div style={{ fontSize: 56, lineHeight: 1, filter: 'drop-shadow(0 8px 18px rgba(0,0,0,0.4))' }}>{weather?.icon || '⛅'}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 10, display: 'flex', flexDirection: 'column', gap: 3, fontWeight: 600 }}>
                       <span>💧 Humidity: 68%</span>
                       <span>💨 Wind: 12 km/h</span>
                       <span>☀️ UV Index: Moderate</span>
@@ -898,47 +895,48 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div style={{
-                  display: 'flex', gap: 8, marginTop: 14,
-                  padding: '9px 12px', borderRadius: 11,
-                  background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)',
+                  display: 'flex', gap: 8, marginTop: 16,
+                  padding: '10px 14px', borderRadius: 14,
+                  background: 'rgba(245,158,11,0.15)', border: '1.5px solid rgba(245,158,11,0.3)',
+                  transform: 'translateZ(8px)',
                 }}>
-                  <AlertTriangle size={13} color="var(--warning)" style={{ flexShrink: 0, marginTop: 1 }} />
-                  <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                  <AlertTriangle size={14} color="#fbbf24" style={{ flexShrink: 0, marginTop: 1 }} />
+                  <p style={{ fontSize: 11, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.5, fontWeight: 500 }}>
                     Weather updated for {location?.city || 'current location'}. Stay hydrated.
                   </p>
                 </div>
-              </div>
+              </TiltCard>
             </motion.div>
 
             <motion.div variants={fadeUp} custom={3}>
-              <div style={{
-                borderRadius: 20, padding: 22,
+              <TiltCard style={{
+                borderRadius: 24, padding: 24,
                 background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                 position: 'relative', overflow: 'hidden',
+                boxShadow: '0 16px 40px rgba(16, 185, 129, 0.4)',
               }}>
-                <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: 'rgba(255,255,255,0.1)' }} />
-                <div style={{ position: 'absolute', bottom: -30, left: 40, width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
-                <div className="flex items-center gap-2 mb-3" style={{ position: 'relative' }}>
-                  <Heart size={16} color="white" fill="rgba(255,255,255,0.4)" />
-                  <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                <div style={{ position: 'absolute', top: -20, right: -20, width: 110, height: 110, borderRadius: '50%', background: 'rgba(255,255,255,0.15)' }} />
+                <div className="flex items-center gap-2 mb-3" style={{ position: 'relative', transform: 'translateZ(10px)' }}>
+                  <Heart size={18} color="white" fill="rgba(255,255,255,0.5)" />
+                  <p style={{ fontSize: 12, color: 'white', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                     Today's Health Tip
                   </p>
                 </div>
-                <p style={{ fontSize: 14, color: 'white', fontWeight: 600, lineHeight: 1.6, position: 'relative', margin: 0 }}>
+                <p style={{ fontSize: 14, color: 'white', fontWeight: 700, lineHeight: 1.6, position: 'relative', margin: 0, transform: 'translateZ(12px)' }}>
                   {HEALTH_TIPS[tipIndex]}
                 </p>
                 <button
                   onClick={() => toast.success('Health reminder set!')}
                   style={{
-                    marginTop: 14, background: 'rgba(255,255,255,0.2)', border: 'none',
+                    marginTop: 14, background: 'rgba(255,255,255,0.25)', border: 'none',
                     borderRadius: 10, padding: '7px 16px', color: 'white', fontSize: 12,
-                    fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                    position: 'relative',
+                    fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                    position: 'relative', transform: 'translateZ(14px)',
                   }}
                 >
                   <Bell size={13} /> Set Reminder
                 </button>
-              </div>
+              </TiltCard>
             </motion.div>
           </div>
         </div>
