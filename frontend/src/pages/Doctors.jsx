@@ -124,81 +124,129 @@ const BookingModal = ({ doctor, onClose }) => {
   );
 };
 
+function TiltCard({ children, className = '', style = {}, maxTilt = 6, scaleOnHover = 1.02, ...props }) {
+  const [rotX, setRotX] = useState(0);
+  const [rotY, setRotY] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    setRotX(Number(((-y / (rect.height / 2)) * maxTilt).toFixed(2)));
+    setRotY(Number(((x / (rect.width / 2)) * maxTilt).toFixed(2)));
+  };
+
+  const handleMouseLeave = () => {
+    setRotX(0);
+    setRotY(0);
+    setIsHovered(false);
+  };
+
+  return (
+    <motion.div
+      className={className}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={handleMouseLeave}
+      animate={{
+        rotateX: rotX,
+        rotateY: rotY,
+        scale: isHovered ? scaleOnHover : 1,
+      }}
+      transition={{ type: 'spring', stiffness: 350, damping: 22 }}
+      style={{
+        transformStyle: 'preserve-3d',
+        perspective: 1000,
+        backfaceVisibility: 'hidden',
+        WebkitFontSmoothing: 'antialiased',
+        boxShadow: isHovered
+          ? '0 24px 60px rgba(0, 0, 0, 0.7), 0 8px 24px rgba(14, 100, 255, 0.35)'
+          : 'var(--shadow-3d-sm)',
+        ...style,
+      }}
+      {...props}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 const DoctorCard = ({ doctor, index, onBook }) => {
   const initials = doctor.name.split(' ').filter(p => p !== 'Dr.').map(p => p[0]).join('').slice(0, 2);
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.08 }} whileHover={{ y: -3 }}
-      className="card p-5 flex flex-col">
-      {/* Header */}
-      <div className="flex items-start gap-4 mb-4">
-        <div className="avatar" style={{ width: 56, height: 56, fontSize: 20, fontWeight: 800, background: `hsl(${(doctor.id * 73) % 360}, 70%, 55%)`, color: 'white', flexShrink: 0 }}>
-          {initials}
+    <TiltCard className="card p-5 flex flex-col justify-between">
+      <div style={{ transform: 'translateZ(6px)' }}>
+        {/* Header */}
+        <div className="flex items-start gap-4 mb-4">
+          <div className="avatar" style={{ width: 56, height: 56, fontSize: 20, fontWeight: 800, background: `hsl(${(doctor.id * 73) % 360}, 70%, 55%)`, color: 'white', flexShrink: 0, transform: 'translateZ(14px)', boxShadow: '0 6px 16px rgba(0,0,0,0.3)' }}>
+            {initials}
+          </div>
+          <div className="flex-1 min-w-0" style={{ transform: 'translateZ(4px)' }}>
+            <h3 className="font-display font-bold" style={{ fontSize: 15, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {doctor.name}
+            </h3>
+            <span className="badge badge-primary" style={{ fontSize: 11, marginBottom: 4 }}>{doctor.specialization}</span>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Building2 size={10} /> {doctor.hospital}
+            </p>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <MapPin size={10} color="#60a5fa" /> {doctor.city}, {doctor.state}
+            </p>
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <h3 className="font-display font-bold" style={{ fontSize: 15, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {doctor.name}
-          </h3>
-          <span className="badge badge-primary" style={{ fontSize: 11, marginBottom: 4 }}>{doctor.specialization}</span>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Building2 size={10} /> {doctor.hospital}
-          </p>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 4 }}>
-            <MapPin size={10} /> {doctor.city}, {doctor.state}
-          </p>
-        </div>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-2 p-3 rounded-xl mb-4" style={{ background: 'var(--bg-primary)' }} title={`Qualifications: ${doctor.qualifications?.join(', ')}`}>
-        <div className="text-center">
-          <p className="font-bold" style={{ fontSize: 16, color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif' }}>{doctor.experience}yr</p>
-          <p style={{ fontSize: 10, color: 'var(--text-muted)' }}>Experience</p>
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-2 p-3 rounded-xl mb-4" style={{ background: 'rgba(13,21,38,0.7)', border: '1px solid var(--border)', transform: 'translateZ(8px)' }} title={`Qualifications: ${doctor.qualifications?.join(', ')}`}>
+          <div className="text-center">
+            <p className="font-bold" style={{ fontSize: 16, color: 'var(--text-primary)', fontFamily: 'Outfit, sans-serif' }}>{doctor.experience}yr</p>
+            <p style={{ fontSize: 10, color: 'var(--text-muted)' }}>Experience</p>
+          </div>
+          <div className="text-center" style={{ borderLeft: '1px solid var(--border)', borderRight: '1px solid var(--border)' }}>
+            <p className="font-bold" style={{ fontSize: 16, color: '#f59e0b', fontFamily: 'Outfit, sans-serif' }}>{doctor.rating}</p>
+            <p style={{ fontSize: 10, color: 'var(--text-muted)' }}>Rating</p>
+          </div>
+          <div className="text-center">
+            <p className="font-bold" style={{ fontSize: 16, color: '#60a5fa', fontFamily: 'Outfit, sans-serif' }}>₹{doctor.consultationFee}</p>
+            <p style={{ fontSize: 10, color: 'var(--text-muted)' }}>Fee</p>
+          </div>
         </div>
-        <div className="text-center" style={{ borderLeft: '1px solid var(--border)', borderRight: '1px solid var(--border)' }}>
-          <p className="font-bold" style={{ fontSize: 16, color: '#f59e0b', fontFamily: 'Outfit, sans-serif' }}>{doctor.rating}</p>
-          <p style={{ fontSize: 10, color: 'var(--text-muted)' }}>Rating</p>
-        </div>
-        <div className="text-center">
-          <p className="font-bold" style={{ fontSize: 16, color: 'var(--primary)', fontFamily: 'Outfit, sans-serif' }}>₹{doctor.consultationFee}</p>
-          <p style={{ fontSize: 10, color: 'var(--text-muted)' }}>Fee</p>
-        </div>
-      </div>
 
-      {/* Languages */}
-      <div className="flex flex-wrap gap-1.5 mb-3">
-        {doctor.languages?.map(lang => (
-          <span key={lang} style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
-            {lang}
+        {/* Languages */}
+        <div className="flex flex-wrap gap-1.5 mb-3">
+          {doctor.languages?.map(lang => (
+            <span key={lang} style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, background: 'rgba(14,100,255,0.15)', color: 'var(--text-secondary)', border: '1px solid rgba(14,100,255,0.2)' }}>
+              {lang}
+            </span>
+          ))}
+        </div>
+
+        {/* Availability */}
+        <div className="flex items-center gap-2 mb-3">
+          <div className="avail-dot" style={{ background: doctor.available ? '#10b981' : '#f59e0b', boxShadow: `0 0 8px ${doctor.available ? '#10b981' : '#f59e0b'}` }} />
+          <span style={{ fontSize: 12, fontWeight: 600, color: doctor.available ? '#34d399' : '#fbbf24' }}>
+            {doctor.available ? 'Available Today' : `Next: ${doctor.nextAvailable}`}
           </span>
-        ))}
+        </div>
+
+        {/* Time Slots */}
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {doctor.availableSlots.slice(0, 3).map(slot => (
+            <span key={slot} style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, background: 'var(--primary-light)', color: '#60a5fa', border: '1px solid rgba(14,100,255,0.3)' }}>
+              {slot}
+            </span>
+          ))}
+          {doctor.availableSlots.length > 3 && (
+            <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, color: 'var(--text-muted)', background: 'var(--border)' }}>+{doctor.availableSlots.length - 3}</span>
+          )}
+        </div>
       </div>
 
-      {/* Availability */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="avail-dot" style={{ background: doctor.available ? '#10b981' : '#f59e0b', boxShadow: `0 0 5px ${doctor.available ? '#10b981' : '#f59e0b'}` }} />
-        <span style={{ fontSize: 12, fontWeight: 600, color: doctor.available ? '#10b981' : '#f59e0b' }}>
-          {doctor.available ? 'Available Today' : `Next: ${doctor.nextAvailable}`}
-        </span>
-      </div>
-
-      {/* Time Slots */}
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        {doctor.availableSlots.slice(0, 3).map(slot => (
-          <span key={slot} style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 500, background: 'var(--primary-light)', color: 'var(--primary)', border: '1px solid rgba(14,100,255,0.2)' }}>
-            {slot}
-          </span>
-        ))}
-        {doctor.availableSlots.length > 3 && (
-          <span style={{ padding: '3px 10px', borderRadius: 6, fontSize: 11, color: 'var(--text-muted)', background: 'var(--border)' }}>+{doctor.availableSlots.length - 3}</span>
-        )}
-      </div>
-
-      <button onClick={() => onBook(doctor)} className="btn btn-primary w-full mt-auto" style={{ fontSize: 13 }}>
+      <button onClick={() => onBook(doctor)} className="btn btn-primary w-full mt-auto" style={{ fontSize: 13, transform: 'translateZ(10px)' }}>
         <Calendar size={14} /> Book Appointment
       </button>
-      <p style={{ fontSize: 10, color: '#f59e0b', textAlign: 'center', marginTop: 8 }}>⚠ Demo doctor profile</p>
-    </motion.div>
+      <p style={{ fontSize: 10, color: '#fbbf24', textAlign: 'center', marginTop: 8 }}>⚠ Demo doctor profile</p>
+    </TiltCard>
   );
 };
 
