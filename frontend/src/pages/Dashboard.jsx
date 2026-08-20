@@ -677,91 +677,100 @@ export default function Dashboard() {
 
       <motion.div variants={staggerContainer} initial="hidden" animate="visible">
 
-        {/* Welcome Banner */}
-        <motion.div variants={fadeUp} custom={0} style={{ marginBottom: 24 }}>
+        {/* Floating Spatial Hero Command Panel */}
+        <motion.div variants={fadeUp} custom={0} style={{ marginBottom: 28, perspective: 1200, transformStyle: 'preserve-3d' }}>
           <div style={{
-            borderRadius: 24,
-            background: 'linear-gradient(135deg, #0e64ff 0%, #0040cc 50%, #7c3aed 100%)',
-            padding: '28px 32px',
+            borderRadius: 28,
+            background: 'linear-gradient(135deg, rgba(14, 100, 255, 0.4) 0%, rgba(124, 58, 237, 0.35) 50%, rgba(11, 188, 184, 0.25) 100%)',
+            backdropFilter: 'blur(32px) saturate(2)',
+            WebkitBackdropFilter: 'blur(32px) saturate(2)',
+            border: '1.5px solid rgba(255, 255, 255, 0.25)',
+            boxShadow: '0 32px 80px rgba(0, 0, 0, 0.7), 0 10px 30px rgba(14, 100, 255, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.4)',
+            padding: '32px 36px',
             position: 'relative', overflow: 'hidden',
+            transformStyle: 'preserve-3d',
+            transform: 'translateZ(20px)',
           }}>
-            <div style={{ position: 'absolute', top: -40, right: -40, width: 240, height: 240, borderRadius: '50%', background: 'rgba(255,255,255,0.07)' }} />
-            <div style={{ position: 'absolute', bottom: -60, right: 80, width: 160, height: 160, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
+            {/* Ambient Background Lights & Floating Spatial Particles */}
+            <div style={{ position: 'absolute', top: -50, right: -50, width: 280, height: 280, borderRadius: '50%', background: 'radial-gradient(circle, rgba(14, 100, 255, 0.35) 0%, transparent 70%)', pointerEvents: 'none' }} />
+            <div style={{ position: 'absolute', bottom: -70, right: 100, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124, 58, 237, 0.3) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span style={{ fontSize: 22 }}>👋</span>
-                  <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, fontWeight: 500 }}>{getGreeting()}</p>
+            <div className="flex items-center justify-between flex-wrap gap-6" style={{ position: 'relative', zIndex: 2, transformStyle: 'preserve-3d' }}>
+              <div style={{ transform: 'translateZ(15px)' }}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span style={{ fontSize: 24, filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }}>👋</span>
+                  <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: 600 }}>{getGreeting()}</p>
                 </div>
-                <h1 style={{ color: 'white', fontSize: 32, fontWeight: 800, margin: 0, fontFamily: 'Outfit, sans-serif' }}>
+                <h1 style={{ color: 'white', fontSize: 36, fontWeight: 900, margin: 0, fontFamily: 'Outfit, sans-serif', textShadow: '0 4px 16px rgba(0,0,0,0.5)' }}>
                   {displayName}!
                 </h1>
-                <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: 13, marginTop: 6 }}>
-                  {formattedDate}
+                <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14, marginTop: 6, fontWeight: 500 }}>
+                  {formattedDate} &middot; <span style={{ color: '#60a5fa', fontWeight: 700 }}>Spatial Command Mode</span>
                 </p>
                 
-                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <div className="flex items-center gap-3 mt-4 flex-wrap" style={{ transform: 'translateZ(10px)' }}>
                   <div style={{
-                    display: 'flex', itemsCenter: 'center', gap: 6,
-                    background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(8px)',
-                    borderRadius: 20, padding: '5px 14px', fontSize: 12, color: 'white',
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(12px)',
+                    borderRadius: 22, padding: '6px 16px', fontSize: 12, color: 'white',
+                    border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700,
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
                   }}>
-                    <CheckCircle size={13} color="#4ade80" />
-                    All systems operational
+                    <CheckCircle size={14} color="#4ade80" />
+                    All Emergency Systems Operational
                   </div>
                   
                   {/* Clickable Location Chip */}
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
+                    whileHover={{ scale: 1.06, z: 20 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setChangeLocationOpen(true)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 6,
-                      background: 'rgba(255,255,255,0.25)', backdropFilter: 'blur(8px)',
-                      borderRadius: 20, padding: '5px 14px', fontSize: 12, color: 'white',
-                      border: '1px solid rgba(255,255,255,0.3)', cursor: 'pointer',
-                      fontWeight: 600,
+                      background: 'rgba(14, 100, 255, 0.35)', backdropFilter: 'blur(12px)',
+                      borderRadius: 22, padding: '6px 16px', fontSize: 12, color: 'white',
+                      border: '1px solid rgba(14, 100, 255, 0.5)', cursor: 'pointer',
+                      fontWeight: 700, boxShadow: '0 6px 18px rgba(14,100,255,0.4)',
                     }}
                   >
-                    <MapPin size={13} />
+                    <MapPin size={14} color="#60a5fa" />
                     {location?.formattedLocation || `${location?.city}, ${location?.state}`}
-                    <ChevronRight size={13} />
+                    <ChevronRight size={14} />
                   </motion.button>
                 </div>
               </div>
 
-              {/* SOS Pulsing Button */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+              {/* 3D Elevated SOS Emergency Sphere */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transform: 'translateZ(30px)' }}>
                 <div style={{ position: 'relative' }}>
                   <motion.div
-                    animate={{ scale: [1, 1.3, 1], opacity: [0.5, 0, 0.5] }}
+                    animate={{ scale: [1, 1.35, 1], opacity: [0.6, 0, 0.6] }}
                     transition={{ duration: 1.8, repeat: Infinity }}
                     style={{
-                      position: 'absolute', inset: -12, borderRadius: '50%',
+                      position: 'absolute', inset: -14, borderRadius: '50%',
                       background: '#ff3333', zIndex: 0,
                     }}
                   />
                   <motion.div
-                    animate={{ scale: [1, 1.15, 1], opacity: [0.3, 0, 0.3] }}
+                    animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0, 0.4] }}
                     transition={{ duration: 1.8, repeat: Infinity, delay: 0.3 }}
                     style={{
-                      position: 'absolute', inset: -6, borderRadius: '50%',
+                      position: 'absolute', inset: -7, borderRadius: '50%',
                       background: '#ff5555', zIndex: 0,
                     }}
                   />
                   <motion.button
                     className="sos-button"
                     onClick={() => setSosOpen(true)}
-                    whileHover={{ scale: 1.06 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileHover={{ scale: 1.1, z: 40 }}
+                    whileTap={{ scale: 0.94 }}
                     style={{ position: 'relative', zIndex: 1 }}
                   >
-                    <AlertTriangle size={22} />
-                    SOS
+                    <AlertTriangle size={24} />
+                    <span style={{ fontSize: 16, fontWeight: 900, letterSpacing: '0.05em' }}>SOS</span>
                   </motion.button>
                 </div>
-                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 500 }}>Emergency</span>
+                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>24/7 Emergency</span>
               </div>
             </div>
           </div>
