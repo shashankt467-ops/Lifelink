@@ -671,15 +671,18 @@ export default function HospitalFinder() {
       : selectedState || 'Pan India';
 
   return (
-    <div style={{
-      position: 'relative',
-      width: '100%',
-      height: 'calc(100vh - 64px)',
-      overflow: 'hidden',
-      background: '#070b14',
-      fontFamily: 'Inter, sans-serif',
-      perspective: '1200px',
-    }}>
+    <div
+      className="hospital-finder-spatial"
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: 'calc(100vh - 64px)',
+        overflow: 'hidden',
+        background: '#070b14',
+        fontFamily: 'Inter, sans-serif',
+        perspective: '1200px',
+      }}
+    >
 
       {/* ── LAYER 1: FULL-SCREEN REAL MAP ENVIRONMENT ── */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>

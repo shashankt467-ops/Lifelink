@@ -118,9 +118,20 @@ h1, h2, h3, h4, h5, h6 {
   max-width: 1400px;
 }
 
+.hospital-finder-spatial {
+  margin: -24px -32px;
+  width: calc(100% + 64px) !important;
+  height: calc(100vh - 64px) !important;
+}
+
 @media (max-width: 768px) {
   .main-content { margin-left: 0; }
   .page-container { padding: 16px; }
+  .hospital-finder-spatial {
+    margin: -16px -16px;
+    width: calc(100% + 32px) !important;
+    height: calc(100vh - 60px) !important;
+  }
 }
 
 /* ─── CARD STYLES ────────────────────────────────────────────────────────────── */
