@@ -110,6 +110,175 @@ function LeafletMapController({ center, hospitals, userLocation, focusHospital }
   return null;
 }
 
+// ─── Skeleton Loading Card ───────────────────────────────────────────────────
+function SkeletonCard() {
+  return (
+    <div style={{
+      borderRadius: 20, padding: 16,
+      background: 'var(--bg-card)', border: '1px solid var(--border)',
+      boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+      overflow: 'hidden',
+    }}>
+      <style>{`
+        @keyframes shimmer {
+          0% { background-position: -400px 0; }
+          100% { background-position: 400px 0; }
+        }
+        .skel {
+          background: linear-gradient(90deg, var(--bg-primary) 25%, var(--bg-secondary) 50%, var(--bg-primary) 75%);
+          background-size: 800px 100%;
+          animation: shimmer 1.4s infinite linear;
+          border-radius: 8px;
+        }
+      `}</style>
+      <div style={{ display: 'flex', gap: 10, marginBottom: 12 }}>
+        <div className="skel" style={{ flex: 1, height: 14, borderRadius: 8 }} />
+        <div className="skel" style={{ width: 42, height: 42, borderRadius: 13, flexShrink: 0 }} />
+      </div>
+      <div className="skel" style={{ height: 10, width: '70%', marginBottom: 8 }} />
+      <div className="skel" style={{ height: 10, width: '50%', marginBottom: 14 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6 }}>
+        {[0,1,2].map(i => <div key={i} className="skel" style={{ height: 36, borderRadius: 8 }} />)}
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+        <div className="skel" style={{ flex: 1, height: 32, borderRadius: 10 }} />
+        <div className="skel" style={{ flex: 1, height: 32, borderRadius: 10 }} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Mobile Bottom Sheet ──────────────────────────────────────────────────────
+function MobileBottomSheet({ hospital, userLocation, onClose, onNavigate: navFn }) {
+  const navigate = useNavigate();
+  if (!hospital) return null;
+
+  const handleDirClick = () => {
+    if (userLocation && hospital.lat && hospital.lng) {
+      window.open(`https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${userLocation.lat},${userLocation.lng};${hospital.lat},${hospital.lng}`, '_blank');
+    } else {
+      window.open(hospital.mapsUrl || `https://www.openstreetmap.org/?mlat=${hospital.lat}&mlon=${hospital.lng}#map=16/${hospital.lat}/${hospital.lng}`, '_blank');
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        key="sheet-backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)',
+          zIndex: 2000, backdropFilter: 'blur(2px)',
+        }}
+      />
+      <motion.div
+        key="sheet"
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+        style={{
+          position: 'fixed', bottom: 0, left: 0, right: 0,
+          background: 'var(--bg-card)', zIndex: 2001,
+          borderRadius: '24px 24px 0 0',
+          padding: '0 20px 32px',
+          boxShadow: '0 -8px 40px rgba(0,0,0,0.2)',
+          maxHeight: '80vh', overflowY: 'auto',
+        }}
+      >
+        {/* Handle bar */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 8px' }}>
+          <div style={{ width: 40, height: 4, borderRadius: 99, background: 'var(--border-hover)' }} />
+        </div>
+
+        {/* Hospital name & emergency badge */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+          <div style={{ flex: 1, paddingRight: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 800, margin: 0, fontFamily: 'Outfit, sans-serif', color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {hospital.name}
+              </h2>
+              {hospital.emergency && (
+                <span style={{ fontSize: 10, fontWeight: 800, padding: '3px 9px', borderRadius: 20, background: 'rgba(220,38,38,0.1)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.25)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>24/7 ER</span>
+              )}
+            </div>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <MapPin size={11} color="var(--primary)" />
+              {hospital.address || `${hospital.city}, ${hospital.state}`}
+            </p>
+          </div>
+          <button onClick={onClose} style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 10, padding: 8, cursor: 'pointer', flexShrink: 0 }}>
+            <X size={16} color="var(--text-muted)" />
+          </button>
+        </div>
+
+        {/* Rating + distance row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14, padding: '10px 14px', borderRadius: 14, background: 'var(--bg-primary)', border: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <Stars rating={hospital.rating || 4.5} size={14} />
+            <span style={{ fontSize: 13, fontWeight: 800, color: '#f59e0b' }}>{hospital.rating || 4.5}</span>
+            {hospital.reviewCount && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>({hospital.reviewCount} reviews)</span>}
+          </div>
+          {hospital.distance > 0 && (
+            <span style={{ fontSize: 12, fontWeight: 700, padding: '3px 10px', borderRadius: 20, background: 'var(--primary-light)', color: 'var(--primary)', marginLeft: 'auto' }}>
+              {hospital.distance.toFixed(1)} km away
+            </span>
+          )}
+        </div>
+
+        {/* Beds grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 14 }}>
+          {[
+            { label: 'General Beds', value: hospital.beds?.general ?? 15, color: '#3b82f6', bg: 'rgba(59,130,246,0.08)' },
+            { label: 'ICU Beds', value: hospital.beds?.icu ?? 4, color: '#ef4444', bg: 'rgba(239,68,68,0.08)' },
+            { label: 'Emergency', value: hospital.beds?.emergency ?? 3, color: '#f59e0b', bg: 'rgba(245,158,11,0.08)' },
+          ].map(({ label, value, color, bg }) => (
+            <div key={label} style={{ textAlign: 'center', padding: '10px 8px', borderRadius: 14, background: bg, border: `1px solid ${color}22` }}>
+              <p style={{ fontSize: 22, fontWeight: 900, color, margin: 0, fontFamily: 'Outfit, sans-serif', lineHeight: 1 }}>{value}</p>
+              <p style={{ fontSize: 9, color: 'var(--text-muted)', margin: '4px 0 0', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 700 }}>{label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Disclaimer */}
+        <p style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', marginBottom: 16, fontStyle: 'italic' }}>
+          ⓘ Simulated availability — hackathon demo
+        </p>
+
+        {/* Action buttons */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={handleDirClick}
+            style={{
+              flex: 1, padding: '12px', borderRadius: 14, border: '1.5px solid var(--border)',
+              background: 'var(--bg-primary)', color: 'var(--text-primary)',
+              fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }}
+          >
+            <Navigation size={15} /> Directions
+          </button>
+          <button
+            onClick={() => { navigate('/hospitals/' + hospital.id); onClose(); }}
+            style={{
+              flex: 1, padding: '12px', borderRadius: 14, border: 'none',
+              background: 'linear-gradient(135deg, var(--primary), #0040cc)',
+              color: 'white', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              boxShadow: '0 4px 14px rgba(14,100,255,0.35)',
+            }}
+          >
+            <ExternalLink size={15} /> View Details
+          </button>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 // ─── Score Star Row ───────────────────────────────────────────────────────────
 function Stars({ rating = 4.5, size = 12 }) {
   const full = Math.floor(rating);
@@ -747,10 +916,28 @@ export default function HospitalFinder() {
           @keyframes spin { to { transform: rotate(360deg); } }
           .hospital-card-list::-webkit-scrollbar { width: 4px; }
           .hospital-card-list::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 99px; }
+
+          /* Leaflet popup polish */
+          .leaflet-popup-content-wrapper {
+            border-radius: 16px !important;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08) !important;
+            border: 1px solid rgba(14,100,255,0.12) !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+          }
+          .leaflet-popup-content { margin: 0 !important; }
+          .leaflet-popup-tip-container { margin-top: -1px !important; }
+          .leaflet-popup-tip { box-shadow: none !important; }
+
           @media (max-width: 768px) {
             .finder-main-row { flex-direction: column !important; }
             .finder-map-area { height: 55vh !important; display: ${mobileView === 'map' ? 'flex' : 'none'} !important; }
             .finder-card-panel { width: 100% !important; height: 45vh !important; display: ${mobileView === 'list' ? 'flex' : 'none'} !important; }
+            /* On mobile, hide the right panel — bottom sheet handles selection */
+            .mobile-sheet-only { display: none !important; }
+          }
+          @media (min-width: 769px) {
+            .mobile-sheet-blocker { display: none !important; }
           }
         `}</style>
       </div>
@@ -922,6 +1109,11 @@ export default function HospitalFinder() {
             className="hospital-card-list"
             style={{ flex: 1, overflowY: 'auto', padding: '12px 12px', display: 'flex', flexDirection: 'column', gap: 10 }}
           >
+            {/* Skeleton loading state */}
+            {isSearchingOsm && visibleHospitals.length === 0 && (
+              [0, 1, 2, 3].map(i => <SkeletonCard key={i} />)
+            )}
+
             <AnimatePresence>
               {visibleHospitals.map(hospital => (
                 <HospitalCard
@@ -929,7 +1121,7 @@ export default function HospitalFinder() {
                   hospital={hospital}
                   userLocation={userLocation}
                   selected={selectedHospital?.id === hospital.id}
-                  onSelect={setSelectedHospital}
+                  onSelect={(h) => { setSelectedHospital(h); }}
                   onFocusMap={(h) => setFocusHospital(h)}
                 />
               ))}
@@ -967,6 +1159,17 @@ export default function HospitalFinder() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* ── MOBILE BOTTOM SHEET (shown when a hospital is selected on mobile) ── */}
+      <div className="mobile-sheet-blocker">
+        {selectedHospital && (
+          <MobileBottomSheet
+            hospital={selectedHospital}
+            userLocation={userLocation}
+            onClose={() => setSelectedHospital(null)}
+          />
+        )}
       </div>
     </div>
   );
