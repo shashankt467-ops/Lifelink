@@ -19,6 +19,7 @@ const PAGE_TITLES = {
   '/blood-bank': 'Blood Bank',
   '/ambulance': 'Ambulance Services',
   '/appointments': 'My Appointments',
+  '/hospital-design': '3D Hospital Design Studio',
   '/ai-assistant': 'AI Health Assistant',
   '/profile': 'My Profile',
 };
