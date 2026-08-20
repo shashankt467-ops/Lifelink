@@ -7,7 +7,7 @@ import {
   MapPin, Clock, Star, Phone, Navigation, X, ChevronRight,
   Brain, Calendar, Activity, Stethoscope, Wind, Thermometer,
   Heart, Zap, Shield, Bot, ArrowRight, Sparkles, CheckCircle,
-  TrendingUp, Bell, Search, MessageSquare, Bed, Locate, Globe, RefreshCw, Cuboid
+  TrendingUp, Bell, Search, MessageSquare, Bed, Locate, Globe, RefreshCw
 } from 'lucide-react';
 
 import { useAuth } from '../context/AuthContext';
@@ -965,67 +965,7 @@ export default function Dashboard() {
           </motion.div>
         </motion.div>
 
-        {/* 3D Hospital Design Studio Promo */}
-        <motion.div variants={fadeUp} custom={3} style={{ marginBottom: 24 }}>
-          <div style={{
-            borderRadius: 24, padding: '24px 28px',
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)',
-            position: 'relative', overflow: 'hidden',
-            border: '1px solid rgba(99,102,241,0.3)',
-          }}>
-            {/* Background decoration */}
-            <div style={{ position: 'absolute', top: -40, right: -20, width: 200, height: 200, borderRadius: '50%', background: 'rgba(99,102,241,0.08)' }} />
-            <div style={{ position: 'absolute', bottom: -30, left: 80, width: 140, height: 140, borderRadius: '50%', background: 'rgba(139,92,246,0.06)' }} />
 
-            <div className="flex items-center justify-between flex-wrap gap-4" style={{ position: 'relative' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{
-                  width: 56, height: 56, borderRadius: 16,
-                  background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  boxShadow: '0 8px 24px rgba(59,130,246,0.4)',
-                }}>
-                  <Cuboid size={26} color="white" />
-                </div>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <h3 style={{ fontSize: 18, fontWeight: 800, margin: 0, color: 'white', fontFamily: 'Outfit, sans-serif' }}>3D Hospital Design Studio</h3>
-                    <span style={{
-                      fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 20,
-                      background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-                      color: 'white', letterSpacing: '0.05em',
-                    }}>NEW</span>
-                  </div>
-                  <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', margin: 0, maxWidth: 420 }}>
-                    AI-powered 3D architectural hospital planning — Vastu compliance, sustainability scoring, structural analysis & real-time visualization.
-                  </p>
-                  <div style={{ display: 'flex', gap: 16, marginTop: 10, flexWrap: 'wrap' }}>
-                    {['🏗️ Multi-floor 3D model', '🔯 Vastu analysis', '🌿 Green rating', '📐 Code compliance'].map(f => (
-                      <span key={f} style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', display: 'flex', alignItems: 'center', gap: 4 }}>{f}</span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <motion.button
-                whileHover={{ scale: 1.04, boxShadow: '0 8px 28px rgba(59,130,246,0.5)' }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => navigate('/hospital-design')}
-                style={{
-                  padding: '12px 24px', borderRadius: 14, border: 'none',
-                  background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-                  color: 'white', fontWeight: 800, fontSize: 14,
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-                  fontFamily: 'Outfit, sans-serif',
-                  boxShadow: '0 4px 16px rgba(59,130,246,0.35)',
-                  flexShrink: 0,
-                }}
-              >
-                <Cuboid size={16} />
-                Open Studio
-              </motion.button>
-            </div>
-          </div>
-        </motion.div>
 
         {/* Quick Actions Grid */}
         <motion.div variants={fadeUp} custom={4} style={{ marginBottom: 32 }}>

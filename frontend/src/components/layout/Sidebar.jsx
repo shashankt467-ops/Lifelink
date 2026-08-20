@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Building2, Brain, UserRound, Bed,
   Droplets, Ambulance, CalendarDays, MessageSquareHeart,
-  User, ChevronLeft, ChevronRight, Activity, Cross, Cuboid
+  User, ChevronLeft, ChevronRight, Activity, Cross
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -16,7 +16,6 @@ const NAV_ITEMS = [
   { path: '/blood-bank',      label: 'Blood Bank',       icon: Droplets },
   { path: '/ambulance',       label: 'Ambulance',        icon: Ambulance },
   { path: '/appointments',    label: 'Appointments',     icon: CalendarDays },
-  { path: '/hospital-design', label: '3D Hospital Studio', icon: Cuboid, badge: 'NEW' },
   { path: '/ai-assistant',    label: 'AI Health Assistant', icon: MessageSquareHeart },
   { path: '/profile',         label: 'Profile',          icon: User },
 ];
