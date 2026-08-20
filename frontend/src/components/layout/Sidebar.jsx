@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Building2, Brain, UserRound, Bed,
   Droplets, Ambulance, CalendarDays, MessageSquareHeart,
-  User, ChevronLeft, ChevronRight, Activity, Cross
+  User, ChevronLeft, ChevronRight, Activity, Cross, Cuboid
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { path: '/blood-bank',      label: 'Blood Bank',       icon: Droplets },
   { path: '/ambulance',       label: 'Ambulance',        icon: Ambulance },
   { path: '/appointments',    label: 'Appointments',     icon: CalendarDays },
+  { path: '/hospital-design', label: '3D Hospital Studio', icon: Cuboid, badge: 'NEW' },
   { path: '/ai-assistant',    label: 'AI Health Assistant', icon: MessageSquareHeart },
   { path: '/profile',         label: 'Profile',          icon: User },
 ];
@@ -78,12 +79,21 @@ export default function Sidebar() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.15 }}
-                    style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}
+                    style={{ whiteSpace: 'nowrap', overflow: 'hidden', flex: 1 }}
                   >
                     {item.label}
                   </motion.span>
                 )}
               </AnimatePresence>
+              {item.badge && sidebarOpen && (
+                <span style={{
+                  fontSize: 9, fontWeight: 800, padding: '2px 6px', borderRadius: 6,
+                  background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+                  color: 'white', flexShrink: 0, letterSpacing: '0.05em',
+                }}>
+                  {item.badge}
+                </span>
+              )}
               {isActive && (
                 <motion.div
                   layoutId="sidebar-active"

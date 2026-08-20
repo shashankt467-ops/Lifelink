@@ -19,6 +19,7 @@ import Ambulance from './pages/Ambulance';
 import Appointments from './pages/Appointments';
 import AIHealthAssistant from './pages/AIHealthAssistant';
 import Profile from './pages/Profile';
+import SmartHospitalDesign from './pages/SmartHospitalDesign';
 
 // Layout
 import DashboardLayout from './components/layout/DashboardLayout';
@@ -84,6 +85,7 @@ export default function App() {
               <Route path="/blood-bank" element={<BloodBank />} />
               <Route path="/ambulance" element={<Ambulance />} />
               <Route path="/appointments" element={<Appointments />} />
+              <Route path="/hospital-design" element={<SmartHospitalDesign />} />
               <Route path="/ai-assistant" element={<AIHealthAssistant />} />
               <Route path="/profile" element={<Profile />} />
             </Route>
