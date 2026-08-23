@@ -46,9 +46,9 @@ export default function Sidebar() {
               className="overflow-hidden"
             >
               <span className="font-display font-bold text-lg" style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
-                Anti<span className="text-gradient">Gravity</span>
+                Life<span className="text-gradient">Link</span>
               </span>
-              <p style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Healthcare Platform</p>
+              <p style={{ fontSize: 10, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Spatial Command System</p>
             </motion.div>
           )}
         </AnimatePresence>
