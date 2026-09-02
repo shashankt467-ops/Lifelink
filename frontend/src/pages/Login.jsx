@@ -24,33 +24,70 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) {
-      toast.error('Please enter your email and password');
+      toast.error('Please enter your email and password', { id: 'auth-error' });
       return;
     }
     setLoading(true);
     try {
       await login(email, password);
-      toast.success('Welcome back to LifeLink');
+      toast.success('Welcome back to LifeLink', { id: 'auth-success' });
       navigate('/dashboard');
     } catch (err) {
-      toast.error(
-        err.message?.includes('wrong-password') || err.message?.includes('user-not-found')
-          ? 'Invalid email or password'
-          : 'Authentication failed. Please try again.'
-      );
+      console.error("EMAIL LOGIN ERROR:", {
+        code: err.code,
+        message: err.message,
+        name: err.name,
+      });
+
+      let msg = 'Authentication failed. Please try again.';
+      if (err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        msg = 'Invalid email or password';
+      } else if (err.code === 'auth/invalid-email') {
+        msg = 'Invalid email format';
+      } else if (err.code === 'auth/too-many-requests') {
+        msg = 'Too many failed login attempts. Please try again later.';
+      } else if (err.message) {
+        msg = `Login Error [${err.code || 'UNKNOWN'}]: ${err.message}`;
+      }
+      toast.error(msg, { id: 'auth-error', duration: 5000 });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogle = async () => {
+  const handleGoogle = async (e) => {
+    if (e) e.preventDefault();
+    if (googleLoading) return;
     setGoogleLoading(true);
     try {
-      await loginWithGoogle();
-      toast.success('Authenticated with Google');
-      navigate('/dashboard');
+      const res = await loginWithGoogle();
+      if (res?.user) {
+        toast.success(`Authenticated with Google! Welcome ${res.user.displayName || res.user.email}`, { id: 'google-auth-success' });
+        navigate('/dashboard');
+      }
     } catch (err) {
-      toast.error('Google sign-in failed');
+      console.error("GOOGLE AUTH ERROR:", {
+        code: err.code,
+        message: err.message,
+        name: err.name,
+      });
+
+      let errorMsg = 'Google sign-in failed.';
+      if (err.code === 'auth/popup-closed-by-user') {
+        errorMsg = 'Google sign-in was cancelled.';
+      } else if (err.code === 'auth/popup-blocked') {
+        errorMsg = 'Google sign-in popup was blocked by browser. Please allow popups.';
+      } else if (err.code === 'auth/invalid-api-key' || err.code === 'auth/api-key-not-valid') {
+        errorMsg = 'Firebase Auth API key is invalid or unconfigured. Check VITE_FIREBASE_API_KEY in .env';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        errorMsg = `Domain (${window.location.hostname}) is not authorized in Firebase Console -> Auth -> Settings -> Authorized domains.`;
+      } else if (err.code === 'auth/operation-not-allowed') {
+        errorMsg = 'Google Sign-In is not enabled in Firebase Console -> Auth -> Sign-in method.';
+      } else if (err.message) {
+        errorMsg = `Google sign-in error [${err.code || 'UNKNOWN'}]: ${err.message}`;
+      }
+
+      toast.error(errorMsg, { id: 'google-auth-error', duration: 6000 });
     } finally {
       setGoogleLoading(false);
     }
@@ -139,7 +176,7 @@ export default function Login() {
             onClick={handleGoogle}
             disabled={googleLoading}
             className="btn btn-outline w-full btn-lg mb-6"
-            style={{ gap: 10, justifyContent: 'center', background: 'rgba(255,255,255,0.04)', borderColor: 'var(--border)' }}
+            style={{ gap: 10, justifyContent: 'center', background: 'rgba(255,255,255,0.04)', borderColor: 'var(--border)', cursor: 'pointer' }}
           >
             {googleLoading ? (
               <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />

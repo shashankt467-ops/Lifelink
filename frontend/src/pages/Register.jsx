@@ -33,54 +33,83 @@ export default function Register() {
   const handleRegister = async (e) => {
     e.preventDefault();
     if (!form.name || !form.email || !form.password || !form.confirm) {
-      toast.error('Please fill in all required fields');
+      toast.error('Please fill in all required fields', { id: 'reg-error' });
       return;
     }
     if (form.password !== form.confirm) {
-      toast.error('Passwords do not match');
+      toast.error('Passwords do not match', { id: 'reg-error' });
       return;
     }
     if (form.password.length < 6) {
-      toast.error('Password must be at least 6 characters');
+      toast.error('Password must be at least 6 characters', { id: 'reg-error' });
       return;
     }
     if (!agree) {
-      toast.error('You must accept the Terms & Conditions and Privacy Policy to create an account');
+      toast.error('You must accept the Terms & Conditions and Privacy Policy to create an account', { id: 'reg-error' });
       return;
     }
 
     setLoading(true);
     try {
       await register(form.name, form.email, form.password);
-      toast.success('Account created successfully! Welcome to LifeLink');
+      toast.success('Account created successfully! Welcome to LifeLink', { id: 'reg-success' });
       navigate('/dashboard');
     } catch (err) {
+      console.error("SIGNUP ERROR:", {
+        code: err.code,
+        message: err.message,
+        name: err.name,
+      });
+
+      let msg = 'Registration failed. Please try again.';
       if (err.code === 'auth/email-already-in-use') {
-        toast.error('This email address is already registered');
+        msg = 'This email address is already registered';
       } else if (err.code === 'auth/invalid-email') {
-        toast.error('Please enter a valid email address');
+        msg = 'Please enter a valid email address';
       } else if (err.code === 'auth/weak-password') {
-        toast.error('Password should be at least 6 characters');
-      } else {
-        toast.error(err.message || 'Registration failed. Please try again.');
+        msg = 'Password should be at least 6 characters';
+      } else if (err.message) {
+        msg = `Signup Error [${err.code || 'UNKNOWN'}]: ${err.message}`;
       }
+      toast.error(msg, { id: 'reg-error', duration: 5000 });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogle = async () => {
+  const handleGoogle = async (e) => {
+    if (e) e.preventDefault();
+    if (googleLoading) return;
     setGoogleLoading(true);
     try {
-      await loginWithGoogle();
-      toast.success('Account created with Google!');
-      navigate('/dashboard');
-    } catch (err) {
-      if (err.code === 'auth/popup-closed-by-user') {
-        toast.error('Google sign-in was cancelled');
-      } else {
-        toast.error('Google sign-in failed');
+      const res = await loginWithGoogle();
+      if (res?.user) {
+        toast.success(`Account created with Google! Welcome ${res.user.displayName || res.user.email}`, { id: 'reg-google-success' });
+        navigate('/dashboard');
       }
+    } catch (err) {
+      console.error("GOOGLE AUTH ERROR:", {
+        code: err.code,
+        message: err.message,
+        name: err.name,
+      });
+
+      let errorMsg = 'Google sign-in failed.';
+      if (err.code === 'auth/popup-closed-by-user') {
+        errorMsg = 'Google sign-in was cancelled.';
+      } else if (err.code === 'auth/popup-blocked') {
+        errorMsg = 'Google sign-in popup was blocked by browser. Please allow popups.';
+      } else if (err.code === 'auth/invalid-api-key' || err.code === 'auth/api-key-not-valid') {
+        errorMsg = 'Firebase Auth API key is invalid or unconfigured. Check VITE_FIREBASE_API_KEY in .env';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        errorMsg = `Domain (${window.location.hostname}) is not authorized in Firebase Console -> Auth -> Settings -> Authorized domains.`;
+      } else if (err.code === 'auth/operation-not-allowed') {
+        errorMsg = 'Google Sign-In is not enabled in Firebase Console -> Auth -> Sign-in method.';
+      } else if (err.message) {
+        errorMsg = `Google sign-in error [${err.code || 'UNKNOWN'}]: ${err.message}`;
+      }
+
+      toast.error(errorMsg, { id: 'reg-google-error', duration: 6000 });
     } finally {
       setGoogleLoading(false);
     }
@@ -264,11 +293,11 @@ export default function Register() {
               />
               <span style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.4 }}>
                 I agree to the{' '}
-                <a href="#terms" onClick={(e) => { e.preventDefault(); toast('LifeLink Terms & Conditions: Emergency healthcare routing platform usage guidelines.', { icon: '📄' }); }} style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'underline' }}>
+                <a href="#terms" onClick={(e) => { e.preventDefault(); toast('LifeLink Terms & Conditions: Emergency healthcare routing platform usage guidelines.', { icon: '📄', id: 'terms-toast' }); }} style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'underline' }}>
                   Terms & Conditions
                 </a>{' '}
                 and{' '}
-                <a href="#privacy" onClick={(e) => { e.preventDefault(); toast('LifeLink Privacy Policy: Encrypted HIPAA compliant patient data protection.', { icon: '🔒' }); }} style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'underline' }}>
+                <a href="#privacy" onClick={(e) => { e.preventDefault(); toast('LifeLink Privacy Policy: Encrypted HIPAA compliant patient data protection.', { icon: '🔒', id: 'privacy-toast' }); }} style={{ color: 'var(--primary)', fontWeight: 600, textDecoration: 'underline' }}>
                   Privacy Policy
                 </a>
               </span>
@@ -297,10 +326,11 @@ export default function Register() {
           </div>
 
           <button
+            type="button"
             onClick={handleGoogle}
             disabled={googleLoading}
             className="btn btn-outline w-full btn-lg mb-6"
-            style={{ gap: 10, justifyContent: 'center', background: 'rgba(255,255,255,0.04)', borderColor: 'var(--border)' }}
+            style={{ gap: 10, justifyContent: 'center', background: 'rgba(255,255,255,0.04)', borderColor: 'var(--border)', cursor: 'pointer' }}
           >
             {googleLoading ? (
               <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
