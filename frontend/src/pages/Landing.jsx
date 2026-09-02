@@ -1,10 +1,10 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
 import {
   Building2, Brain, Ambulance, Stethoscope, Droplets, MessageSquareHeart,
-  MapPin, Clock, Shield, Heart, ChevronRight, Cross, Phone, Activity,
-  Star, CheckCircle, Zap, Globe, Lock, ArrowRight, Sparkles, Navigation, AlertTriangle
+  Shield, Heart, ChevronRight, Cross, Activity, Star, CheckCircle,
+  ArrowRight, Sparkles, Navigation, AlertTriangle, Globe, Compass
 } from 'lucide-react';
 
 const FEATURES = [
@@ -41,17 +41,29 @@ const FadeIn = ({ children, delay = 0, y = 30 }) => {
 export default function Landing() {
   const navigate = useNavigate();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [scrollY, setScrollY] = useState(0);
 
-  const handleMouseMove = (e) => {
-    const { clientX, clientY } = e;
-    const x = (clientX / window.innerWidth - 0.5) * 30;
-    const y = (clientY / window.innerHeight - 0.5) * 30;
-    setMousePos({ x, y });
-  };
+  useEffect(() => {
+    const handleMouse = (e) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 35;
+      const y = (e.clientY / window.innerHeight - 0.5) * 35;
+      setMousePos({ x, y });
+    };
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener('mousemove', handleMouse);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouse);
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   return (
     <div
-      onMouseMove={handleMouseMove}
       style={{
         background: '#030712',
         color: '#ffffff',
@@ -62,27 +74,49 @@ export default function Landing() {
         perspective: 1200,
       }}
     >
-      {/* Background Perspective Space */}
+      {/* ── LAYER 1: OVERSIZED BACKGROUND STROKE TYPOGRAPHY ── */}
+      <div
+        className="bg-text-hero"
+        style={{
+          top: 140,
+          left: '50%',
+          transform: `translate3d(calc(-50% + ${mousePos.x * 0.4}px), ${mousePos.y * 0.4 - scrollY * 0.15}px, -150px)`,
+        }}
+      >
+        HEALTHCARE
+      </div>
+
+      <div
+        className="bg-text-hero bg-text-glow"
+        style={{
+          top: 380,
+          left: '50%',
+          transform: `translate3d(calc(-50% + ${mousePos.x * -0.5}px), ${mousePos.y * -0.5 - scrollY * 0.25}px, -200px)`,
+          fontSize: 'clamp(3.5rem, 11vw, 9rem)',
+        }}
+      >
+        SPATIAL COMMAND
+      </div>
+
+      {/* Atmospheric Spatial Ambient Space */}
       <div
         style={{
           position: 'fixed',
           inset: 0,
           backgroundImage: `
-            radial-gradient(circle at 50% 0%, rgba(14, 100, 255, 0.28) 0%, transparent 70%),
-            radial-gradient(circle at 80% 80%, rgba(124, 58, 237, 0.22) 0%, transparent 60%),
-            radial-gradient(circle at 20% 50%, rgba(11, 188, 184, 0.18) 0%, transparent 50%),
-            linear-gradient(rgba(14, 100, 255, 0.07) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(14, 100, 255, 0.07) 1px, transparent 1px)
+            radial-gradient(circle at 50% 10%, rgba(14, 100, 255, 0.3) 0%, transparent 65%),
+            radial-gradient(circle at 85% 85%, rgba(124, 58, 237, 0.25) 0%, transparent 55%),
+            radial-gradient(circle at 15% 55%, rgba(11, 188, 184, 0.2) 0%, transparent 50%),
+            linear-gradient(rgba(14, 100, 255, 0.05) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(14, 100, 255, 0.05) 1px, transparent 1px)
           `,
           backgroundSize: '100% 100%, 100% 100%, 100% 100%, 54px 54px, 54px 54px',
           pointerEvents: 'none',
           zIndex: 0,
-          transform: `translate3d(${mousePos.x * 0.2}px, ${mousePos.y * 0.2}px, -100px)`,
-          transition: 'transform 0.2s ease-out',
         }}
       />
 
-      {/* Floating Header */}
+      {/* Floating Spatial Nav */}
       <nav
         style={{
           position: 'fixed',
@@ -99,7 +133,7 @@ export default function Landing() {
           alignItems: 'center',
           justifyContent: 'space-between',
           boxShadow: '0 20px 60px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.25)',
-          transform: `translate3d(${mousePos.x * 0.3}px, ${mousePos.y * 0.3}px, 20px)`,
+          transform: `translate3d(${mousePos.x * 0.2}px, ${mousePos.y * 0.2}px, 20px)`,
           transition: 'transform 0.2s ease-out',
         }}
       >
@@ -128,13 +162,13 @@ export default function Landing() {
         </div>
       </nav>
 
-      {/* Main Spatial Hero Section */}
+      {/* ── SECTION 1: SPATIAL HERO WITH OVERLAPPING DEPTH ── */}
       <section
         style={{
           position: 'relative',
-          zIndex: 1,
-          paddingTop: 160,
-          paddingBottom: 100,
+          zIndex: 3,
+          paddingTop: 180,
+          paddingBottom: 120,
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
@@ -154,36 +188,38 @@ export default function Landing() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: 10,
-            padding: '8px 20px',
+            padding: '8px 22px',
             borderRadius: 99,
             background: 'rgba(14, 100, 255, 0.25)',
             border: '1.5px solid rgba(96, 165, 250, 0.5)',
-            boxShadow: '0 10px 30px rgba(14,100,255,0.3)',
-            marginBottom: 32,
-            transform: `translate3d(${mousePos.x * 0.5}px, ${mousePos.y * 0.5}px, 30px)`,
+            boxShadow: '0 10px 30px rgba(14,100,255,0.35)',
+            marginBottom: 28,
+            transform: `translate3d(${mousePos.x * 0.4}px, ${mousePos.y * 0.4}px, 30px)`,
           }}
         >
           <Sparkles size={16} color="#60a5fa" />
           <span style={{ fontSize: 13, fontWeight: 800, color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Spatial AI Healthcare Command Architecture
+            Spatial AI Healthcare Ecosystem
           </span>
         </motion.div>
 
-        {/* Oversized Spatial Title */}
+        {/* Foreground Title overlapping 3D Scene */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1 }}
+          transition={{ duration: 0.75, delay: 0.1 }}
           className="text-spatial-hero"
           style={{
             maxWidth: 1100,
             marginBottom: 24,
-            transform: `translate3d(${mousePos.x * 0.7}px, ${mousePos.y * 0.7}px, 40px)`,
+            transform: `translate3d(${mousePos.x * 0.6}px, ${mousePos.y * 0.6}px, 40px)`,
+            position: 'relative',
+            zIndex: 4,
           }}
         >
-          EMERGENCY HEALTHCARE. <br />
+          EMERGENCY CARE. <br />
           <span style={{ background: 'linear-gradient(135deg, #0e64ff 0%, #0bbcb8 50%, #7c3aed 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            COMMANDED BY SPATIAL AI.
+            REIMAGINED IN 3D.
           </span>
         </motion.h1>
 
@@ -191,32 +227,36 @@ export default function Landing() {
         <motion.p
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
+          transition={{ duration: 0.75, delay: 0.2 }}
           style={{
             fontSize: 'clamp(16px, 2vw, 20px)',
             color: 'var(--text-secondary)',
-            maxWidth: 760,
+            maxWidth: 780,
             lineHeight: 1.6,
             marginBottom: 44,
             fontWeight: 500,
-            transform: `translate3d(${mousePos.x * 0.6}px, ${mousePos.y * 0.6}px, 30px)`,
+            position: 'relative',
+            zIndex: 4,
+            transform: `translate3d(${mousePos.x * 0.5}px, ${mousePos.y * 0.5}px, 30px)`,
           }}
         >
-          Real-time hospital bed routing, instant dispatch telemetry, and multi-variable AI medical matching in a spatial 3D navigation ecosystem.
+          Real-time hospital bed routing, instant dispatch telemetry, and multi-variable AI medical matching in an interactive spatial 3D command environment.
         </motion.p>
 
         {/* Hero Actions */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.3 }}
+          transition={{ duration: 0.75, delay: 0.3 }}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 20,
             flexWrap: 'wrap',
             justifyContent: 'center',
-            transform: `translate3d(${mousePos.x * 0.8}px, ${mousePos.y * 0.8}px, 50px)`,
+            position: 'relative',
+            zIndex: 4,
+            transform: `translate3d(${mousePos.x * 0.7}px, ${mousePos.y * 0.7}px, 50px)`,
           }}
         >
           <button
@@ -224,7 +264,7 @@ export default function Landing() {
             className="btn btn-primary btn-lg"
             style={{ fontSize: 17, padding: '16px 40px', borderRadius: 22 }}
           >
-            Enter Spatial Command Platform <ArrowRight size={18} />
+            Enter Spatial Command Center <ArrowRight size={18} />
           </button>
           <button
             onClick={() => navigate('/hospitals')}
@@ -234,65 +274,17 @@ export default function Landing() {
             <Navigation size={18} color="#60a5fa" /> Explore Hospital Finder
           </button>
         </motion.div>
-
-        {/* Spatial Floating Preview Console */}
-        <motion.div
-          initial={{ opacity: 0, y: 50, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.85, delay: 0.4 }}
-          style={{
-            marginTop: 70,
-            maxWidth: 1200,
-            width: '100%',
-            background: 'var(--bg-card)',
-            border: '2.5px solid rgba(14, 100, 255, 0.45)',
-            borderRadius: 36,
-            padding: 36,
-            boxShadow: '0 40px 120px rgba(0,0,0,0.95), 0 16px 60px rgba(14, 100, 255, 0.4)',
-            position: 'relative',
-            transformStyle: 'preserve-3d',
-            transform: `translate3d(${mousePos.x * 0.9}px, ${mousePos.y * 0.9}px, 60px) rotateX(${mousePos.y * -0.2}deg) rotateY(${mousePos.x * 0.2}deg)`,
-            transition: 'transform 0.2s ease-out',
-          }}
-        >
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 24, textAlign: 'left' }}>
-            <div style={{ padding: 20, borderRadius: 24, background: 'rgba(10,16,34,0.9)', border: '1.5px solid var(--border)', transform: 'translateZ(20px)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <Activity size={20} color="#60a5fa" />
-                <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Live System Status</span>
-              </div>
-              <p style={{ fontSize: 24, fontWeight: 900, color: '#34d399', margin: 0, fontFamily: 'Outfit, sans-serif' }}>Operational</p>
-              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>500+ Hospital nodes active</span>
-            </div>
-            <div style={{ padding: 20, borderRadius: 24, background: 'rgba(10,16,34,0.9)', border: '1.5px solid var(--border)', transform: 'translateZ(26px)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <Brain size={20} color="#a78bfa" />
-                <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>AI Recommendation</span>
-              </div>
-              <p style={{ fontSize: 24, fontWeight: 900, color: '#60a5fa', margin: 0, fontFamily: 'Outfit, sans-serif' }}>Active Engine</p>
-              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Condition match score 98%</span>
-            </div>
-            <div style={{ padding: 20, borderRadius: 24, background: 'rgba(10,16,34,0.9)', border: '1.5px solid var(--border)', transform: 'translateZ(32px)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-                <AlertTriangle size={20} color="#ef4444" />
-                <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-muted)', textTransform: 'uppercase' }}>Emergency Response</span>
-              </div>
-              <p style={{ fontSize: 24, fontWeight: 900, color: '#f87171', margin: 0, fontFamily: 'Outfit, sans-serif' }}>2.4 min Avg ETA</p>
-              <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Instant SOS telemetry</span>
-            </div>
-          </div>
-        </motion.div>
       </section>
 
-      {/* Features Grid Section */}
-      <section style={{ position: 'relative', zIndex: 1, padding: '80px 32px 120px 32px', maxWidth: 1400, margin: '0 auto' }}>
+      {/* ── SECTION 2: SCROLL-DRIVEN FEATURE CAPABILITIES ── */}
+      <section style={{ position: 'relative', zIndex: 3, padding: '120px 32px 140px 32px', maxWidth: 1400, margin: '0 auto' }}>
         <FadeIn>
-          <div style={{ textAlign: 'center', marginBottom: 60 }}>
+          <div style={{ textAlign: 'center', marginBottom: 70 }}>
             <h2 className="text-spatial-title" style={{ marginBottom: 16 }}>
-              COMPLETE EMERGENCY HEALTHCARE ECOSYSTEM
+              COMPLETE HEALTHCARE SUBSYSTEMS
             </h2>
             <p style={{ fontSize: 18, color: 'var(--text-secondary)', maxWidth: 640, margin: '0 auto' }}>
-              Engineered for immediate response, precise hospital selection, and seamless clinical coordination.
+              Engineered for immediate emergency response, precise hospital routing, and live clinical telemetry.
             </p>
           </div>
         </FadeIn>
@@ -309,6 +301,9 @@ export default function Landing() {
                   flexDirection: 'column',
                   justifyContent: 'space-between',
                   transformStyle: 'preserve-3d',
+                  background: 'rgba(9, 15, 32, 0.92)',
+                  border: '2px solid rgba(14, 100, 255, 0.3)',
+                  backdropFilter: 'blur(20px)',
                 }}
               >
                 <div>
@@ -328,7 +323,7 @@ export default function Landing() {
                 </div>
                 <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: '#60a5fa', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    Active Subsystem <ChevronRight size={14} />
+                    Active Spatial Node <ChevronRight size={14} />
                   </span>
                 </div>
               </div>
@@ -337,8 +332,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* System Metrics Strip */}
-      <section style={{ position: 'relative', zIndex: 1, padding: '60px 32px 100px 32px', background: 'rgba(9,15,32,0.95)', borderTop: '2px solid var(--border)', borderBottom: '2px solid var(--border)' }}>
+      {/* ── SECTION 3: SYSTEM METRICS STRIP ── */}
+      <section style={{ position: 'relative', zIndex: 3, padding: '80px 32px 100px 32px', background: 'rgba(8,14,30,0.95)', borderTop: '2px solid var(--border)', borderBottom: '2px solid var(--border)' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 32, textAlign: 'center' }}>
           {STATS.map((s, i) => (
             <FadeIn key={s.label} delay={i * 0.1}>
@@ -356,20 +351,20 @@ export default function Landing() {
       </section>
 
       {/* Footer CTA */}
-      <footer style={{ position: 'relative', zIndex: 1, padding: '80px 32px 60px 32px', textAlign: 'center' }}>
-        <div style={{ maxWidth: 700, margin: '0 auto' }}>
-          <h2 style={{ fontSize: 32, fontWeight: 900, marginBottom: 16, fontFamily: 'Outfit, sans-serif' }}>
-            READY TO EXPERIENCE LIFELINK SPATIAL COMMAND?
+      <footer style={{ position: 'relative', zIndex: 3, padding: '100px 32px 60px 32px', textAlign: 'center' }}>
+        <div style={{ maxWidth: 740, margin: '0 auto' }}>
+          <h2 style={{ fontSize: 36, fontWeight: 900, marginBottom: 16, fontFamily: 'Outfit, sans-serif' }}>
+            READY TO COMMAND LIFELINK IN 3D?
           </h2>
-          <p style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 32 }}>
-            Access real-time hospital finder, AI recommendations, and emergency telemetry instant services.
+          <p style={{ fontSize: 16, color: 'var(--text-secondary)', marginBottom: 36 }}>
+            Access real-time hospital discovery, AI condition matching, and emergency dispatch telemetry.
           </p>
           <button
             onClick={() => navigate('/dashboard')}
             className="btn btn-primary btn-lg"
-            style={{ fontSize: 16, padding: '15px 36px' }}
+            style={{ fontSize: 17, padding: '16px 40px', borderRadius: 22 }}
           >
-            Launch Command Center Now <ArrowRight size={18} />
+            Launch Command Center <ArrowRight size={18} />
           </button>
         </div>
       </footer>

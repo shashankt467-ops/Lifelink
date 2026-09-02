@@ -110,6 +110,30 @@ body::before {
   letter-spacing: -0.02em;
 }
 
+/* ─── OVERSIZED BACKGROUND TYPOGRAPHY DEPTH LAYERING ─────────────────────── */
+.bg-text-hero {
+  font-family: 'Outfit', sans-serif;
+  font-size: clamp(4.5rem, 13vw, 11rem);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.14);
+  text-transform: uppercase;
+  user-select: none;
+  pointer-events: none;
+  position: absolute;
+  z-index: 1;
+  white-space: nowrap;
+  transition: transform 0.2s ease-out;
+}
+
+.bg-text-glow {
+  background: linear-gradient(180deg, rgba(14, 100, 255, 0.18) 0%, rgba(124, 58, 237, 0.02) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 h1, h2, h3, h4, h5, h6, p, span, a, label, button, input {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
