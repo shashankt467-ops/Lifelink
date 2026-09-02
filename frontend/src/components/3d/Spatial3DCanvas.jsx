@@ -1,10 +1,11 @@
 import { useRef, useMemo, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, Sphere, Points, PointMaterial } from '@react-three/drei';
+import { Points, PointMaterial, Float } from '@react-three/drei';
 import * as THREE from 'three';
 
-// ─── 1. Particle Constellation Network ──────────────────────────────────────
-function ParticleNetwork({ count = 500, scrollY }) {
+// ─── Subtle Ambient Background Particles ──────────────────────────────────────
+function ParticleNetwork({ count = 300, scrollY }) {
   const pointsRef = useRef();
 
   const [positions, colors] = useMemo(() => {
@@ -15,8 +16,8 @@ function ParticleNetwork({ count = 500, scrollY }) {
     const colorC = new THREE.Color('#7c3aed');
 
     for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 40;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 40;
+      pos[i * 3] = (Math.random() - 0.5) * 45;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 45;
       pos[i * 3 + 2] = (Math.random() - 0.5) * 30;
 
       const mixColor = i % 3 === 0 ? colorA : i % 3 === 1 ? colorB : colorC;
@@ -29,10 +30,10 @@ function ParticleNetwork({ count = 500, scrollY }) {
 
   useFrame((state, delta) => {
     if (pointsRef.current) {
-      const scrollFactor = (scrollY.current || 0) * 0.0005;
-      pointsRef.current.rotation.x += delta * (0.02 + scrollFactor * 0.1);
-      pointsRef.current.rotation.y += delta * (0.04 + scrollFactor * 0.1);
-      pointsRef.current.rotation.z = scrollFactor * 0.5;
+      const scrollFactor = (scrollY.current || 0) * 0.0003;
+      pointsRef.current.rotation.x += delta * 0.015;
+      pointsRef.current.rotation.y += delta * 0.025;
+      pointsRef.current.rotation.z = scrollFactor * 0.3;
     }
   });
 
@@ -41,150 +42,57 @@ function ParticleNetwork({ count = 500, scrollY }) {
       <PointMaterial
         transparent
         vertexColors
-        size={0.16}
+        size={0.14}
         sizeAttenuation={true}
         depthWrite={false}
-        opacity={0.8}
+        opacity={0.65}
       />
     </Points>
   );
 }
 
-// ─── 2. Real Interactive 3D Medical Core Scene ──────────────────────────────
-function MedicalCore3DScene({ mousePos, scrollY }) {
-  const groupRef = useRef();
-  const innerCoreRef = useRef();
-  const outerRing1Ref = useRef();
-  const outerRing2Ref = useRef();
-  const satellitesRef = useRef();
+// ─── Subtle Hero 3D Medical Emblem (Only rendered on non-map views) ─────────
+function SubtleMedicalHero({ mousePos }) {
+  const meshRef = useRef();
+  const ringRef = useRef();
 
   useFrame((state, delta) => {
-    const scrollProgress = Math.min(1, (scrollY.current || 0) / (document.documentElement.scrollHeight - window.innerHeight || 1));
-    const mx = (mousePos.current.x / window.innerWidth - 0.5) * 2;
-    const my = (mousePos.current.y / window.innerHeight - 0.5) * 2;
+    const mx = (mousePos.current.x / window.innerWidth - 0.5) * 1.5;
+    const my = (mousePos.current.y / window.innerHeight - 0.5) * 1.5;
 
-    if (groupRef.current) {
-      // Mouse Parallax + Lerp Rotation
-      const targetRotY = mx * 0.4 + scrollProgress * Math.PI * 2;
-      const targetRotX = my * -0.3 + Math.sin(scrollProgress * Math.PI) * 0.5;
-      
-      groupRef.current.rotation.y = THREE.MathUtils.lerp(groupRef.current.rotation.y, targetRotY, 0.05);
-      groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, targetRotX, 0.05);
-
-      // Scroll Position Transition (Center -> Right -> Left -> Center)
-      let targetX = 0;
-      let targetY = 0;
-      let targetZ = 0;
-
-      if (scrollProgress > 0.05 && scrollProgress <= 0.35) {
-        targetX = -4.5 + mx * 0.5;
-        targetY = -0.5 + my * 0.5;
-        targetZ = -2;
-      } else if (scrollProgress > 0.35 && scrollProgress <= 0.7) {
-        targetX = 4.5 + mx * 0.5;
-        targetY = 0.5 + my * 0.5;
-        targetZ = -1;
-      } else if (scrollProgress > 0.7) {
-        targetX = mx * 0.8;
-        targetY = Math.sin(state.clock.getElapsedTime()) * 0.3;
-        targetZ = 1;
-      }
-
-      groupRef.current.position.x = THREE.MathUtils.lerp(groupRef.current.position.x, targetX, 0.04);
-      groupRef.current.position.y = THREE.MathUtils.lerp(groupRef.current.position.y, targetY, 0.04);
-      groupRef.current.position.z = THREE.MathUtils.lerp(groupRef.current.position.z, targetZ, 0.04);
+    if (meshRef.current) {
+      meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, mx * 0.5 + state.clock.getElapsedTime() * 0.15, 0.05);
+      meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, my * -0.3, 0.05);
     }
-
-    if (innerCoreRef.current) {
-      innerCoreRef.current.rotation.y += delta * 0.5;
-      innerCoreRef.current.rotation.z += delta * 0.3;
-    }
-
-    if (outerRing1Ref.current) {
-      outerRing1Ref.current.rotation.z -= delta * 0.4;
-      outerRing1Ref.current.rotation.x += delta * 0.2;
-    }
-
-    if (outerRing2Ref.current) {
-      outerRing2Ref.current.rotation.y += delta * 0.6;
-      outerRing2Ref.current.rotation.z += delta * 0.15;
-    }
-
-    if (satellitesRef.current) {
-      satellitesRef.current.rotation.y += delta * 0.8;
+    if (ringRef.current) {
+      ringRef.current.rotation.z -= delta * 0.2;
     }
   });
 
-  // Satellite node coordinates
-  const satellites = useMemo(() => {
-    return Array.from({ length: 6 }).map((_, i) => {
-      const angle = (i / 6) * Math.PI * 2;
-      const radius = 4.2;
-      return [Math.cos(angle) * radius, Math.sin(angle) * 1.5, Math.sin(angle) * radius];
-    });
-  }, []);
-
   return (
-    <group ref={groupRef} position={[0, 0, 0]}>
-      <Float speed={2.5} rotationIntensity={0.6} floatIntensity={1.2}>
-        {/* Central Icosahedron Medical Core */}
-        <mesh ref={innerCoreRef}>
-          <icosahedronGeometry args={[2.2, 1]} />
+    <group position={[5, 1, -6]}>
+      <Float speed={1.8} rotationIntensity={0.3} floatIntensity={0.8}>
+        <mesh ref={meshRef}>
+          <icosahedronGeometry args={[1.8, 1]} />
           <meshStandardMaterial
             wireframe
             color="#0e64ff"
             emissive="#0e64ff"
-            emissiveIntensity={0.8}
-            roughness={0.2}
-            metalness={0.8}
+            emissiveIntensity={0.6}
+            transparent
+            opacity={0.5}
           />
         </mesh>
-
-        {/* Inner Glowing Sphere */}
-        <mesh>
-          <sphereGeometry args={[1.3, 32, 32]} />
+        <mesh ref={ringRef}>
+          <torusGeometry args={[2.8, 0.04, 16, 80]} />
           <meshStandardMaterial
             color="#0bbcb8"
             emissive="#0bbcb8"
-            emissiveIntensity={1.5}
+            emissiveIntensity={0.8}
             transparent
-            opacity={0.7}
+            opacity={0.5}
           />
         </mesh>
-
-        {/* Outer Ring 1 - Medical Blue */}
-        <mesh ref={outerRing1Ref}>
-          <torusGeometry args={[3.6, 0.07, 16, 100]} />
-          <meshStandardMaterial
-            color="#0e64ff"
-            emissive="#0e64ff"
-            emissiveIntensity={1.2}
-          />
-        </mesh>
-
-        {/* Outer Ring 2 - Holographic Purple */}
-        <mesh ref={outerRing2Ref} rotation={[Math.PI / 4, 0, 0]}>
-          <torusGeometry args={[4.4, 0.05, 16, 100]} />
-          <meshStandardMaterial
-            color="#7c3aed"
-            emissive="#7c3aed"
-            emissiveIntensity={1.2}
-          />
-        </mesh>
-
-        {/* Orbiting Satellite Nodes */}
-        <group ref={satellitesRef}>
-          {satellites.map((pos, idx) => (
-            <mesh key={idx} position={pos}>
-              <sphereGeometry args={[0.22, 16, 16]} />
-              <meshStandardMaterial
-                color={idx % 2 === 0 ? "#0bbcb8" : "#60a5fa"}
-                emissive={idx % 2 === 0 ? "#0bbcb8" : "#60a5fa"}
-                emissiveIntensity={2}
-              />
-            </mesh>
-          ))}
-        </group>
       </Float>
     </group>
   );
@@ -192,6 +100,9 @@ function MedicalCore3DScene({ mousePos, scrollY }) {
 
 // ─── Main Spatial 3D WebGL Canvas ──────────────────────────────────────────
 export default function Spatial3DCanvas() {
+  const location = useLocation();
+  const isMapRoute = location.pathname.startsWith('/hospitals');
+
   const mousePos = useRef({ x: window.innerWidth / 2, y: window.innerHeight / 2 });
   const scrollY = useRef(0);
 
@@ -212,6 +123,11 @@ export default function Spatial3DCanvas() {
     };
   }, []);
 
+  // Do not render geometric canvas overlay on map routes to ensure 100% clean map visibility
+  if (isMapRoute) {
+    return null;
+  }
+
   return (
     <div
       id="spatial-3d-canvas-container"
@@ -219,7 +135,7 @@ export default function Spatial3DCanvas() {
         position: 'fixed',
         inset: 0,
         pointerEvents: 'none',
-        zIndex: 2,
+        zIndex: 0,
         background: 'transparent',
       }}
     >
@@ -227,13 +143,12 @@ export default function Spatial3DCanvas() {
         camera={{ position: [0, 0, 12], fov: 55 }}
         gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       >
-        <ambientLight intensity={0.6} />
-        <pointLight position={[12, 12, 12]} intensity={1.8} color="#0e64ff" />
-        <pointLight position={[-12, -12, -12]} intensity={1.2} color="#7c3aed" />
-        <spotLight position={[0, 15, 10]} intensity={1.5} color="#0bbcb8" angle={0.6} />
+        <ambientLight intensity={0.5} />
+        <pointLight position={[10, 10, 10]} intensity={1.5} color="#0e64ff" />
+        <pointLight position={[-10, -10, -10]} intensity={0.8} color="#7c3aed" />
 
-        <ParticleNetwork count={450} scrollY={scrollY} />
-        <MedicalCore3DScene mousePos={mousePos} scrollY={scrollY} />
+        <ParticleNetwork count={350} scrollY={scrollY} />
+        {location.pathname === '/' && <SubtleMedicalHero mousePos={mousePos} />}
       </Canvas>
     </div>
   );

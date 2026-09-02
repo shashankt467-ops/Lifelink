@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Search, MapPin, Clock, Phone, Navigation, Filter,
-  Activity, Locate, X, AlertTriangle, Building2, RefreshCw,
-  Globe, Shield, SlidersHorizontal, ExternalLink,
-  Compass, Wifi, WifiOff, Info, CheckCircle2, Car, Accessibility,
-  Droplets, Ambulance as AmbulanceIcon
+  Search, MapPin, Phone, Navigation, Activity, Locate, X,
+  AlertTriangle, Building2, RefreshCw, Globe, SlidersHorizontal,
+  ExternalLink, Compass, Wifi, WifiOff, CheckCircle2, Bed, Stethoscope
 } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
@@ -16,7 +14,6 @@ import { dbStore } from '../services/firestore/db';
 import toast from 'react-hot-toast';
 import { useApp } from '../context/AppContext';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 const HOSPITAL_TYPES = ['Hospital', 'Specialty Clinic', 'Nursing Home', 'Medical College'];
 const SPECIALIZATIONS = [
   'Cardiology', 'Neurology', 'Orthopedics', 'Pediatrics', 'Oncology',
@@ -24,54 +21,109 @@ const SPECIALIZATIONS = [
   'Emergency Medicine', 'General Emergency Care',
 ];
 
-// ─── Verified Field Display Helper ────────────────────────────────────────────
 const display = (val, fallback = 'Not available') => {
   if (val === null || val === undefined || val === '' || val === 'Not available') return fallback;
   return val;
 };
 
-// ─── 3D Spatial Hospital Marker ───────────────────────────────────────────────
-const createLeafletIcon = (color = '#0e64ff', label = '', selected = false, isEmergency = false) =>
+// ─── Compact 3D Spatial Hospital Marker Icon ─────────────────────────────────
+const createCompactSpatialIcon = (selected = false, isEmergency = false, label = '') =>
   L.divIcon({
-    className: '',
+    className: 'spatial-marker-wrapper',
     html: `
       <div style="
+        position: relative;
         display: flex;
         flex-direction: column;
         align-items: center;
-        transform: translate(-50%, -100%) ${selected ? 'scale(1.2) translateY(-8px)' : 'scale(1)'};
-        transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+        transform: translate(-50%, -100%) ${selected ? 'translateY(-8px) scale(1.22)' : 'scale(1)'};
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
         cursor: pointer;
-        font-family: Outfit,Inter,sans-serif;
+        z-index: ${selected ? 1000 : 100};
       ">
+        {/* Compact 3D Marker Pin */}
         <div style="
+          width: ${selected ? '36px' : '30px'};
+          height: ${selected ? '36px' : '30px'};
+          border-radius: 50%;
           background: ${selected
-            ? 'linear-gradient(135deg,#0e64ff,#7c3aed)'
+            ? 'linear-gradient(135deg, #0e64ff 0%, #7c3aed 100%)'
             : isEmergency
-              ? 'linear-gradient(135deg,#dc2626,#991b1b)'
-              : 'linear-gradient(135deg,#1e293b,#0f172a)'};
-          color: white;
-          padding: 5px 11px 5px 7px;
-          border-radius: 20px;
-          font-size: 11px;
-          font-weight: 800;
+              ? 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)'
+              : 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)'};
+          border: ${selected
+            ? '2.5px solid #ffffff'
+            : isEmergency
+              ? '2px solid rgba(255,255,255,0.9)'
+              : '2px solid rgba(255,255,255,0.7)'};
           box-shadow: ${selected
-            ? '0 12px 28px rgba(14,100,255,0.55),0 0 0 2.5px rgba(255,255,255,0.9)'
+            ? '0 10px 25px rgba(14,100,255,0.7), 0 0 0 4px rgba(14,100,255,0.3)'
             : isEmergency
-              ? '0 8px 20px rgba(220,38,38,0.45),0 0 0 1.5px rgba(255,255,255,0.2)'
-              : '0 8px 20px rgba(0,0,0,0.4),0 0 0 1.5px rgba(255,255,255,0.15)'};
-          white-space: nowrap;
+              ? '0 6px 18px rgba(220,38,38,0.6)'
+              : '0 6px 16px rgba(0,0,0,0.5)'};
           display: flex;
           align-items: center;
-          gap: 5px;
-          max-width: 160px;
-          overflow: hidden;
+          justify-content: center;
+          font-size: ${selected ? '18px' : '15px'};
+          color: white;
         ">
-          <span style="font-size:13px;flex-shrink:0">${isEmergency ? '🚨' : '🏥'}</span>
-          <span style="overflow:hidden;text-overflow:ellipsis">${(label || 'Hospital').substring(0, 18)}</span>
+          ${isEmergency ? '🚨' : '🏥'}
         </div>
-        <div style="width:2px;height:10px;background:${isEmergency ? '#dc2626' : '#0e64ff'};box-shadow:0 0 6px ${isEmergency ? '#dc2626' : '#0e64ff'}"></div>
-        <div style="width:16px;height:5px;background:rgba(0,0,0,0.3);border-radius:50%;filter:blur(2px)"></div>
+
+        {/* Stem */}
+        <div style="
+          width: 2px;
+          height: 8px;
+          background: ${isEmergency ? '#dc2626' : '#0e64ff'};
+          box-shadow: 0 0 6px ${isEmergency ? '#dc2626' : '#0e64ff'};
+        "></div>
+
+        {/* Ground 3D Drop Shadow */}
+        <div style="
+          width: 16px;
+          height: 5px;
+          background: rgba(0, 0, 0, 0.4);
+          border-radius: 50%;
+          filter: blur(2px);
+          transform: translateY(-2px);
+        "></div>
+      </div>
+    `,
+    iconSize: [0, 0],
+    iconAnchor: [0, 0],
+  });
+
+// ─── Compact Cluster Marker Icon ──────────────────────────────────────────────
+const createClusterIcon = (count = 2) =>
+  L.divIcon({
+    className: 'spatial-cluster-wrapper',
+    html: `
+      <div style="
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transform: translate(-50%, -50%);
+        cursor: pointer;
+      ">
+        <div style="
+          background: linear-gradient(135deg, #0e64ff 0%, #0040cc 100%);
+          color: white;
+          padding: 6px 14px;
+          border-radius: 20px;
+          font-size: 12px;
+          font-weight: 800;
+          font-family: Outfit, sans-serif;
+          border: 2px solid #ffffff;
+          box-shadow: 0 8px 24px rgba(14,100,255,0.6), 0 0 0 4px rgba(14,100,255,0.25);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          white-space: nowrap;
+        ">
+          <span style="font-size: 13px;">🏥</span>
+          <span>${count} Hospitals</span>
+        </div>
       </div>
     `,
     iconSize: [0, 0],
@@ -84,7 +136,6 @@ const userMarkerIcon = L.divIcon({
     <div style="position:relative;width:32px;height:32px;transform:translate(-50%,-50%)">
       <div style="position:absolute;inset:7px;background:linear-gradient(135deg,#10b981,#059669);border:2.5px solid white;border-radius:50%;box-shadow:0 0 20px #10b981,0 4px 10px rgba(0,0,0,0.3);z-index:2"></div>
       <div style="position:absolute;inset:-4px;border-radius:50%;border:2px solid rgba(16,185,129,0.6);animation:usr-ping 2s ease-out infinite"></div>
-      <div style="position:absolute;inset:-14px;border-radius:50%;border:1.5px solid rgba(16,185,129,0.3);animation:usr-ping 2s ease-out 0.6s infinite"></div>
       <style>@keyframes usr-ping{0%{transform:scale(0.5);opacity:1}100%{transform:scale(1.6);opacity:0}}</style>
     </div>
   `,
@@ -92,18 +143,18 @@ const userMarkerIcon = L.divIcon({
   iconAnchor: [0, 0],
 });
 
-// ─── Map Controller: centers and fits bounds ──────────────────────────────────
+// ─── Map Controller with Smooth Fly-To Animation ─────────────────────────────
 function MapController({ center, hospitals, userLocation, focusHospital }) {
   const map = useMap();
-  const lastFocus = useRef(null);
+  const lastFocusId = useRef(null);
 
   useEffect(() => {
     if (focusHospital && (focusHospital.lat || focusHospital.latitude)) {
       const lat = Number(focusHospital.lat || focusHospital.latitude);
       const lng = Number(focusHospital.lng || focusHospital.longitude);
-      if (!isNaN(lat) && !isNaN(lng) && lastFocus.current !== focusHospital.id) {
-        lastFocus.current = focusHospital.id;
-        map.setView([lat, lng], 15, { animate: true });
+      if (!isNaN(lat) && !isNaN(lng) && lastFocusId.current !== focusHospital.id) {
+        lastFocusId.current = focusHospital.id;
+        map.flyTo([lat, lng], 15, { animate: true, duration: 0.8 });
       }
       return;
     }
@@ -113,25 +164,24 @@ function MapController({ center, hospitals, userLocation, focusHospital }) {
         .map(h => [Number(h.lat || h.latitude), Number(h.lng || h.longitude)]);
       if (userLocation) points.push([userLocation.lat, userLocation.lng]);
       if (points.length === 1) {
-        map.setView(points[0], 14);
+        map.flyTo(points[0], 14, { animate: true, duration: 0.8 });
       } else if (points.length > 1) {
         try { map.fitBounds(L.latLngBounds(points), { padding: [60, 60], maxZoom: 14 }); } catch (_) {}
       }
     } else if (center) {
-      map.setView([center.lat, center.lng], 11);
+      map.flyTo([center.lat, center.lng], 12, { animate: true, duration: 0.8 });
     }
   }, [center, hospitals, userLocation, focusHospital, map]);
 
   return null;
 }
 
-// ─── Map click to dismiss inspector ──────────────────────────────────────────
 function MapClickHandler({ onMapClick }) {
   useMapEvents({ click: onMapClick });
   return null;
 }
 
-// ─── Spatial Hospital Card ────────────────────────────────────────────────────
+// ─── Compact Spatial Hospital Card (Right Sidebar List) ──────────────────────
 function HospitalCard({ hospital, selected, onSelect, onFocus, userLocation }) {
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);
@@ -156,85 +206,74 @@ function HospitalCard({ hospital, selected, onSelect, onFocus, userLocation }) {
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.94 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onClick={() => { onSelect(hospital); onFocus(hospital); }}
       style={{
         background: selected
-          ? 'linear-gradient(135deg,rgba(14,100,255,0.18),rgba(124,58,237,0.12))'
+          ? 'linear-gradient(135deg, rgba(14,100,255,0.2) 0%, rgba(124,58,237,0.14) 100%)'
           : hovered ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)',
-        backdropFilter: 'blur(20px) saturate(1.6)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.6)',
-        borderRadius: 18,
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderRadius: 16,
         border: selected
-          ? '1.5px solid rgba(14,100,255,0.55)'
+          ? '1.5px solid rgba(14,100,255,0.65)'
           : hovered ? '1px solid rgba(14,100,255,0.3)' : '1px solid rgba(255,255,255,0.08)',
-        padding: '14px 16px',
+        padding: '12px 14px',
         cursor: 'pointer',
         position: 'relative',
-        overflow: 'hidden',
         boxShadow: selected
-          ? '0 16px 36px rgba(14,100,255,0.22),inset 0 1px 1px rgba(255,255,255,0.25)'
-          : hovered ? '0 8px 24px rgba(0,0,0,0.14)' : 'none',
-        transform: selected ? 'translateY(-2px)' : 'none',
+          ? '0 12px 30px rgba(14,100,255,0.25)'
+          : hovered ? '0 8px 20px rgba(0,0,0,0.15)' : 'none',
         transition: 'all 0.25s ease',
       }}
     >
       {selected && (
         <div style={{
-          position: 'absolute', top: 0, left: 0, bottom: 0, width: 3,
+          position: 'absolute', top: 0, left: 0, bottom: 0, width: 3.5,
           background: 'linear-gradient(180deg,#0e64ff,#7c3aed)',
           boxShadow: '0 0 10px #0e64ff',
+          borderRadius: '4px 0 0 4px',
         }} />
       )}
 
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 8 }}>
+      {/* Title Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap', marginBottom: 3 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 2 }}>
             <h3 style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'Outfit,sans-serif', margin: 0, lineHeight: 1.2 }}>
               {hospital.name}
             </h3>
             {isEmergency && (
-              <span style={{ fontSize: 9, fontWeight: 800, padding: '1px 6px', borderRadius: 20, background: 'rgba(220,38,38,0.12)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.25)', letterSpacing: '0.04em', flexShrink: 0 }}>
+              <span style={{ fontSize: 9, fontWeight: 800, padding: '1px 6px', borderRadius: 20, background: 'rgba(220,38,38,0.15)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.3)', flexShrink: 0 }}>
                 24/7 ER
               </span>
             )}
-            {hospital.open24x7 && !isEmergency && (
-              <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 6px', borderRadius: 20, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)', flexShrink: 0 }}>
-                24/7
-              </span>
-            )}
-            {hospital.isOsmData && (
-              <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 20, background: 'rgba(16,185,129,0.1)', color: '#059669', border: '1px solid rgba(16,185,129,0.2)', flexShrink: 0 }}>
-                OSM Verified
-              </span>
-            )}
           </div>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, display: 'flex', alignItems: 'center', gap: 3, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, display: 'flex', alignItems: 'center', gap: 4, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
             <MapPin size={10} color="var(--primary)" style={{ flexShrink: 0 }} />
             {hospital.address && hospital.address !== 'Address not provided in OpenStreetMap'
               ? hospital.address
-              : `${hospital.city || 'Unknown'}, ${hospital.state || 'India'}`}
+              : `${hospital.city || ''}, ${hospital.state || 'India'}`}
           </p>
         </div>
         <div style={{
-          width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+          width: 34, height: 34, borderRadius: 10, flexShrink: 0,
           background: isEmergency ? 'rgba(220,38,38,0.12)' : 'rgba(14,100,255,0.1)',
           border: `1px solid ${isEmergency ? 'rgba(220,38,38,0.25)' : 'rgba(14,100,255,0.2)'}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          {isEmergency ? <AlertTriangle size={18} color="#dc2626" /> : <Building2 size={18} color="var(--primary)" />}
+          {isEmergency ? <AlertTriangle size={16} color="#dc2626" /> : <Building2 size={16} color="var(--primary)" />}
         </div>
       </div>
 
-      {/* Type + Distance */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20, background: 'rgba(14,100,255,0.1)', color: 'var(--primary)', border: '1px solid rgba(14,100,255,0.15)' }}>
+      {/* Metrics Row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: 'rgba(14,100,255,0.1)', color: 'var(--primary)', border: '1px solid rgba(14,100,255,0.15)' }}>
           {hospital.type || 'Healthcare Facility'}
         </span>
         {dist > 0 && (
@@ -242,75 +281,40 @@ function HospitalCard({ hospital, selected, onSelect, onFocus, userLocation }) {
             <Compass size={10} /> {dist.toFixed(1)} km away
           </span>
         )}
-        {hospital.phone && hospital.phone !== 'Not available' && (
-          <span style={{ fontSize: 10, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 3 }}>
-            <Phone size={10} /> Listed
-          </span>
-        )}
-      </div>
-
-      {/* Verified Info Strip */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: '1fr 1fr',
-        gap: 6, padding: '8px 10px', borderRadius: 12,
-        background: 'rgba(10,16,34,0.6)', border: '1px solid rgba(255,255,255,0.05)',
-        marginBottom: 10,
-      }}>
-        <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-          <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Hours: </span>
-          {display(hospital.openingHours)}
-        </div>
-        <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-          <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Type: </span>
-          {display(hospital.type)}
-        </div>
-        <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-          <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Beds: </span>
-          {hospital.beds?.total && hospital.beds.total !== 'Availability not provided'
-            ? `${hospital.beds.total} total`
-            : 'Availability not provided'}
-        </div>
-        <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>
-          <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Emergency: </span>
-          {isEmergency ? '✓ Yes' : hospital.emergency === false ? 'No' : 'Not available'}
-        </div>
       </div>
 
       {/* Actions */}
-      <div style={{ display: 'flex', gap: 7 }}>
+      <div style={{ display: 'flex', gap: 6 }}>
         <button
           onClick={handleDirections}
           style={{
-            flex: 1, padding: '8px 0', borderRadius: 10,
+            flex: 1, padding: '7px 0', borderRadius: 8,
             border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)',
             color: 'var(--text-primary)', fontSize: 11, fontWeight: 800,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            transition: 'all 0.2s',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
         >
-          <Navigation size={12} /> OSRM Route
+          <Navigation size={11} /> Directions
         </button>
         <button
           onClick={(e) => { e.stopPropagation(); navigate('/hospitals/' + hospital.id); }}
           style={{
-            flex: 1, padding: '8px 0', borderRadius: 10, border: 'none',
+            flex: 1, padding: '7px 0', borderRadius: 8, border: 'none',
             background: 'linear-gradient(135deg,var(--primary),#0040cc)',
             color: 'white', fontSize: 11, fontWeight: 800,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
             boxShadow: '0 4px 12px rgba(14,100,255,0.3)',
           }}
         >
-          <ExternalLink size={12} /> View Details
+          <ExternalLink size={11} /> Details
         </button>
       </div>
     </motion.div>
   );
 }
 
-// ─── Inspector Panel (floats over map when hospital selected) ─────────────────
-function InspectorPanel({ hospital, userLocation, onClose }) {
+// ─── Compact Spatial Floating Card (Selected Hospital Inspector) ─────────────
+function CompactSpatialInspector({ hospital, userLocation, onClose }) {
   const navigate = useNavigate();
   if (!hospital) return null;
 
@@ -331,28 +335,33 @@ function InspectorPanel({ hospital, userLocation, onClose }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24, scale: 0.95 }}
+      initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 24, scale: 0.95 }}
-      transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+      exit={{ opacity: 0, y: 20, scale: 0.95 }}
+      transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
       style={{
-        position: 'absolute', bottom: 24, left: 24, zIndex: 1200,
-        maxWidth: 440, width: 'calc(100% - 420px)',
-        background: 'rgba(8,15,30,0.92)',
+        position: 'absolute', bottom: 20, left: 20, zIndex: 1200,
+        maxWidth: 380, width: 'calc(100% - 400px)',
+        background: 'rgba(8,15,30,0.95)',
         backdropFilter: 'blur(28px) saturate(2)',
         WebkitBackdropFilter: 'blur(28px) saturate(2)',
-        borderRadius: 22, border: '1.5px solid rgba(14,100,255,0.35)',
-        padding: '18px 20px',
-        boxShadow: '0 24px 60px rgba(0,0,0,0.4),0 0 0 1px rgba(255,255,255,0.06)',
+        borderRadius: 20, border: '1.5px solid rgba(14,100,255,0.4)',
+        padding: '16px 18px',
+        boxShadow: '0 20px 50px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1)',
       }}
     >
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap', marginBottom: 3 }}>
-            <h2 style={{ fontSize: 17, fontWeight: 900, margin: 0, fontFamily: 'Outfit,sans-serif' }}>{hospital.name}</h2>
-            {isEmergency && <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 20, background: 'rgba(220,38,38,0.15)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.3)' }}>24/7 ER</span>}
-            {hospital.open24x7 && !isEmergency && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20, background: 'rgba(245,158,11,0.12)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)' }}>24/7</span>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 3 }}>
+            <h2 style={{ fontSize: 16, fontWeight: 900, margin: 0, fontFamily: 'Outfit,sans-serif', color: 'var(--text-primary)' }}>
+              {hospital.name}
+            </h2>
+            {isEmergency && (
+              <span style={{ fontSize: 9, fontWeight: 800, padding: '1px 6px', borderRadius: 20, background: 'rgba(220,38,38,0.15)', color: '#dc2626', border: '1px solid rgba(220,38,38,0.3)' }}>
+                24/7 ER
+              </span>
+            )}
           </div>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
             <MapPin size={11} color="var(--primary)" />
@@ -361,58 +370,40 @@ function InspectorPanel({ hospital, userLocation, onClose }) {
               : `${hospital.city || ''}, ${hospital.state || 'India'}`}
           </p>
         </div>
-        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: 6, cursor: 'pointer', flexShrink: 0 }}>
-          <X size={15} color="var(--text-muted)" />
+        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: 5, cursor: 'pointer', flexShrink: 0 }}>
+          <X size={14} color="var(--text-muted)" />
         </button>
       </div>
 
       {/* Info Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 12 }}>
         {[
-          { label: 'Distance', val: hospital.distance > 0 ? `${hospital.distance.toFixed(1)} km` : 'Not available' },
+          { label: 'Distance', val: hospital.distance > 0 ? `${hospital.distance.toFixed(1)} km away` : 'Not available' },
           { label: 'Opening Hours', val: display(hospital.openingHours) },
           { label: 'Phone', val: display(hospital.phone) },
-          { label: 'Type', val: display(hospital.type) },
-          { label: 'Beds Total', val: hospital.beds?.total && hospital.beds.total !== 'Availability not provided' ? hospital.beds.total : 'Availability not provided' },
-          { label: 'Wheelchair', val: hospital.wheelchairAccessible === true ? 'Yes' : 'Not available' },
-          { label: 'Blood Bank', val: hospital.bloodBankAvailable === true ? 'Yes' : 'Not available' },
-          { label: 'Ambulance', val: hospital.ambulanceAvailable === true ? 'Yes' : 'Not available' },
+          { label: 'Facility Type', val: display(hospital.type) },
+          { label: 'Beds', val: hospital.beds?.total && hospital.beds.total !== 'Availability not provided' ? `${hospital.beds.total} total` : 'Availability not provided' },
+          { label: 'Emergency Status', val: isEmergency ? '✓ 24/7 ER Ready' : 'Not available' },
         ].map(({ label, val }) => (
-          <div key={label} style={{ padding: '7px 9px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div key={label} style={{ padding: '6px 8px', borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
             <p style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', margin: 0 }}>{label}</p>
-            <p style={{ fontSize: 12, fontWeight: 600, color: val === 'Not available' || val === 'Availability not provided' ? 'var(--text-muted)' : 'var(--text-primary)', margin: '2px 0 0', fontStyle: val === 'Not available' || val === 'Availability not provided' ? 'italic' : 'normal' }}>{val}</p>
+            <p style={{ fontSize: 11, fontWeight: 600, color: val.includes('Not available') || val.includes('not provided') ? 'var(--text-muted)' : 'var(--text-primary)', margin: '1px 0 0', fontStyle: val.includes('Not available') || val.includes('not provided') ? 'italic' : 'normal' }}>{val}</p>
           </div>
         ))}
       </div>
 
-      {/* Website Row */}
-      {hospital.website && hospital.website !== 'Not available' && (
-        <div style={{ marginBottom: 12 }}>
-          <a href={hospital.website} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: '#60a5fa', display: 'flex', alignItems: 'center', gap: 5, textDecoration: 'none' }}>
-            <Globe size={13} /> {hospital.website.length > 50 ? hospital.website.substring(0, 50) + '…' : hospital.website}
-          </a>
-        </div>
-      )}
-
-      {/* Source Badge */}
-      <div style={{ marginBottom: 12, fontSize: 10, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 5 }}>
-        <CheckCircle2 size={11} color="#10b981" />
-        Source: {display(hospital.source, 'OpenStreetMap Overpass API')}
-        {hospital.lastVerifiedAt && ` · Verified ${new Date(hospital.lastVerifiedAt).toLocaleDateString()}`}
-      </div>
-
       {/* Action Buttons */}
-      <div style={{ display: 'flex', gap: 9 }}>
-        <button onClick={handleDirections} style={{ flex: 1, padding: '10px', borderRadius: 12, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-          <Navigation size={14} /> OSRM Route
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={handleDirections} style={{ flex: 1, padding: '9px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.05)', color: 'var(--text-primary)', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+          <Navigation size={13} /> OSRM Route
         </button>
         {hospital.phone && hospital.phone !== 'Not available' && (
-          <button onClick={() => window.open(`tel:${hospital.phone}`)} style={{ flex: 1, padding: '10px', borderRadius: 12, border: '1px solid rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.08)', color: '#10b981', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <Phone size={14} /> Call
+          <button onClick={() => window.open(`tel:${hospital.phone}`)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: '1px solid rgba(16,185,129,0.3)', background: 'rgba(16,185,129,0.08)', color: '#10b981', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+            <Phone size={13} /> Call
           </button>
         )}
-        <button onClick={() => navigate('/hospitals/' + hospital.id)} style={{ flex: 1, padding: '10px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,var(--primary),#0040cc)', color: 'white', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, boxShadow: '0 4px 14px rgba(14,100,255,0.3)' }}>
-          <ExternalLink size={14} /> Full Profile
+        <button onClick={() => navigate('/hospitals/' + hospital.id)} style={{ flex: 1, padding: '9px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,var(--primary),#0040cc)', color: 'white', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5, boxShadow: '0 4px 12px rgba(14,100,255,0.35)' }}>
+          <ExternalLink size={13} /> View Details
         </button>
       </div>
     </motion.div>
@@ -432,7 +423,7 @@ export default function HospitalFinder() {
     location?.source === 'gps' ? 'found' : 'idle'
   );
 
-  // Search & Filter state
+  // Filter state
   const [search, setSearch] = useState('');
   const [selectedState, setSelectedState] = useState(location?.state || 'Maharashtra');
   const [selectedCity, setSelectedCity] = useState(location?.city || 'Pune');
@@ -448,7 +439,7 @@ export default function HospitalFinder() {
   const [osmHospitals, setOsmHospitals] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [discoveryError, setDiscoveryError] = useState(null);
-  const [discoveryStatus, setDiscoveryStatus] = useState('idle'); // idle | searching | success | error | fallback
+  const [discoveryStatus, setDiscoveryStatus] = useState('idle');
   const [lastVerified, setLastVerified] = useState(null);
 
   // Map state
@@ -471,7 +462,7 @@ export default function HospitalFinder() {
     }
   }, [location?.lat, location?.lng, location?.city, location?.state]);
 
-  // Run OSM discovery
+  // Run Overpass discovery
   const runDiscovery = useCallback(async (city, state, coords, isRefresh = false) => {
     setIsSearching(true);
     setDiscoveryStatus('searching');
@@ -484,7 +475,7 @@ export default function HospitalFinder() {
         try {
           targetCoords = await geocodeCity(city, state || 'Maharashtra');
         } catch (e) {
-          setDiscoveryError('Location geocoding failed. Try selecting a different city.');
+          setDiscoveryError('Location geocoding failed.');
           setDiscoveryStatus('error');
           setIsSearching(false);
           return;
@@ -496,37 +487,7 @@ export default function HospitalFinder() {
       }
 
       setMapCenter(targetCoords);
-
       const radiusKm = distanceMax ? Number(distanceMax) : 20;
-      
-      // Clear memory cache on manual refresh
-      if (isRefresh) {
-        // Force fresh query by using slightly offset coords
-        const freshCoords = { lat: targetCoords.lat + 0.0001, lng: targetCoords.lng + 0.0001 };
-        const fetched = await queryOverpassHospitals({
-          lat: freshCoords.lat,
-          lng: freshCoords.lng,
-          radiusKm,
-          userLocation: userLocation || targetCoords,
-        });
-        if (fetched && fetched.length > 0) {
-          // Recalculate distances with current userLocation
-          const withDist = fetched.map(h => ({
-            ...h,
-            distance: userLocation
-              ? calcDistanceKm(userLocation.lat, userLocation.lng, h.lat || h.latitude, h.lng || h.longitude)
-              : h.distance || 0,
-          }));
-          setOsmHospitals(withDist);
-          setDiscoveryStatus('success');
-          setLastVerified(new Date().toISOString());
-          toast.success(`✅ Refreshed — found ${withDist.length} hospitals from OpenStreetMap`);
-        } else {
-          setOsmHospitals([]);
-          setDiscoveryStatus('empty');
-        }
-        return;
-      }
 
       const fetched = await queryOverpassHospitals({
         lat: targetCoords.lat,
@@ -545,8 +506,8 @@ export default function HospitalFinder() {
         setOsmHospitals(withDist);
         setDiscoveryStatus('success');
         setLastVerified(new Date().toISOString());
+        if (isRefresh) toast.success(`Refreshed — ${withDist.length} hospitals discovered via OpenStreetMap`);
       } else {
-        // Show Firestore cached hospitals if Overpass returns nothing
         const cachedHospitals = dbStore.getCollection('hospitals').filter(h => h.isOsmData);
         if (cachedHospitals.length > 0) {
           const withDist = cachedHospitals.map(h => ({
@@ -564,7 +525,6 @@ export default function HospitalFinder() {
       }
     } catch (err) {
       console.warn('Hospital discovery error:', err);
-      // Try Firestore cache on any error
       const cachedHospitals = dbStore.getCollection('hospitals').filter(h => h.isOsmData);
       if (cachedHospitals.length > 0) {
         setOsmHospitals(cachedHospitals);
@@ -579,7 +539,6 @@ export default function HospitalFinder() {
     }
   }, [distanceMax, userLocation]);
 
-  // Trigger discovery on city/state change
   useEffect(() => {
     if (selectedCity) {
       runDiscovery(selectedCity, selectedState, null);
@@ -618,9 +577,8 @@ export default function HospitalFinder() {
   // Filtered + Sorted Hospitals
   const filteredHospitals = useMemo(() => {
     const norm = (s) => (s ? String(s).trim().toLowerCase() : '');
-    
+
     return osmHospitals.filter(h => {
-      // Text search: name, address, city, specializations
       if (search) {
         const q = norm(search);
         const specs = (h.specializations || []).join(' ').toLowerCase();
@@ -632,18 +590,13 @@ export default function HospitalFinder() {
           !specs.includes(q)
         ) return false;
       }
-      // Hospital type filter
       if (selectedType && norm(h.type) !== norm(selectedType)) return false;
-      // Specialization filter
       if (selectedSpecialist) {
         const specs = (h.specializations || []).map(s => norm(s));
         if (!specs.some(s => s.includes(norm(selectedSpecialist)) || norm(selectedSpecialist).includes(s))) return false;
       }
-      // Emergency only
       if (emergencyOnly && h.emergency !== true) return false;
-      // 24/7 only
       if (open24x7Only && !h.open24x7 && h.emergency !== true) return false;
-      // Max distance filter
       if (distanceMax && h.distance > Number(distanceMax)) return false;
       return true;
     }).sort((a, b) => {
@@ -652,6 +605,46 @@ export default function HospitalFinder() {
       return 0;
     });
   }, [osmHospitals, search, selectedType, selectedSpecialist, emergencyOnly, open24x7Only, distanceMax, sortBy]);
+
+  // ─── Spatial Distance Group Clustering ──────────────────────────────────────
+  // Groups nearby markers within 0.03 lat/lng grid buckets into compact cluster pills
+  const { clusteredItems, individualItems } = useMemo(() => {
+    const clusters = [];
+    const unclustered = [];
+    const bucketSize = 0.035;
+
+    const grid = new Map();
+
+    filteredHospitals.forEach(h => {
+      const lat = Number(h.lat || h.latitude);
+      const lng = Number(h.lng || h.longitude);
+      if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+
+      const key = `${Math.floor(lat / bucketSize)}_${Math.floor(lng / bucketSize)}`;
+      if (!grid.has(key)) {
+        grid.set(key, []);
+      }
+      grid.get(key).push(h);
+    });
+
+    grid.forEach((items) => {
+      if (items.length >= 3) {
+        const avgLat = items.reduce((sum, item) => sum + Number(item.lat || item.latitude), 0) / items.length;
+        const avgLng = items.reduce((sum, item) => sum + Number(item.lng || item.longitude), 0) / items.length;
+        clusters.push({
+          id: `cluster-${items[0].id}`,
+          count: items.length,
+          lat: avgLat,
+          lng: avgLng,
+          items,
+        });
+      } else {
+        items.forEach(item => unclustered.push(item));
+      }
+    });
+
+    return { clusteredItems: clusters, individualItems: unclustered };
+  }, [filteredHospitals]);
 
   const locationLabel = locationStatus === 'found'
     ? (location?.formattedLocation || `${selectedCity}, ${selectedState}`)
@@ -689,7 +682,7 @@ export default function HospitalFinder() {
       fontFamily: 'Inter,sans-serif',
     }}>
 
-      {/* ── LAYER 1: FULL-SCREEN MAP ─────────────────────────────────────────── */}
+      {/* ── LAYER 1: CLEAN REAL INTERACTIVE MAP (ZERO CANVAS OVERLAY) ─────────── */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
         <MapContainer
           center={[mapCenter.lat, mapCenter.lng]}
@@ -698,7 +691,7 @@ export default function HospitalFinder() {
           zoomControl={false}
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapController
@@ -709,19 +702,35 @@ export default function HospitalFinder() {
           />
           <MapClickHandler onMapClick={() => setSelectedHospital(null)} />
 
-          {/* User location marker */}
+          {/* User location pin */}
           {userLocation && (
             <Marker position={[userLocation.lat, userLocation.lng]} icon={userMarkerIcon}>
               <Popup>
                 <div style={{ padding: 4, fontSize: 13, fontWeight: 800, color: '#059669', fontFamily: 'Outfit,sans-serif' }}>
-                  📍 Your Current GPS Location
+                  📍 Your GPS Location
                 </div>
               </Popup>
             </Marker>
           )}
 
-          {/* Hospital markers */}
-          {filteredHospitals.map(h => {
+          {/* Cluster Markers */}
+          {clusteredItems.map(c => (
+            <Marker
+              key={c.id}
+              position={[c.lat, c.lng]}
+              icon={createClusterIcon(c.count)}
+              eventHandlers={{
+                click: (e) => {
+                  e.originalEvent.stopPropagation();
+                  setFocusHospital(c.items[0]);
+                  setMapCenter({ lat: c.lat, lng: c.lng });
+                }
+              }}
+            />
+          ))}
+
+          {/* Individual Compact Spatial Hospital Pins */}
+          {individualItems.map(h => {
             const lat = Number(h.lat || h.latitude);
             const lng = Number(h.lng || h.longitude);
             if (!lat || !lng || isNaN(lat) || isNaN(lng)) return null;
@@ -730,39 +739,36 @@ export default function HospitalFinder() {
               <Marker
                 key={h.id}
                 position={[lat, lng]}
-                icon={createLeafletIcon(
-                  h.emergency ? '#dc2626' : '#0e64ff',
-                  h.name,
+                icon={createCompactSpatialIcon(
                   isSelected,
-                  h.emergency === true
+                  h.emergency === true,
+                  h.name
                 )}
                 eventHandlers={{
-                  click: () => {
+                  click: (e) => {
+                    e.originalEvent.stopPropagation();
                     setSelectedHospital(h);
                     setFocusHospital(h);
                   }
                 }}
               >
-                <Popup maxWidth={260}>
-                  <div style={{ padding: '6px 4px', fontFamily: 'Inter,sans-serif' }}>
-                    <p style={{ fontSize: 14, fontWeight: 900, color: '#0f172a', margin: '0 0 3px', fontFamily: 'Outfit,sans-serif' }}>{h.name}</p>
+                <Popup maxWidth={240}>
+                  <div style={{ padding: '4px 2px', fontFamily: 'Inter,sans-serif' }}>
+                    <p style={{ fontSize: 13, fontWeight: 900, color: '#0f172a', margin: '0 0 2px', fontFamily: 'Outfit,sans-serif' }}>{h.name}</p>
                     <p style={{ fontSize: 11, color: '#475569', margin: '0 0 4px' }}>
                       {h.address && h.address !== 'Address not provided in OpenStreetMap' ? h.address : `${h.city || ''}, ${h.state || 'India'}`}
                     </p>
                     <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 6 }}>
                       {h.distance > 0 && <span style={{ fontSize: 10, color: '#10b981', fontWeight: 800 }}>{h.distance.toFixed(1)} km</span>}
-                      {h.emergency && <span style={{ fontSize: 9, background: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5', padding: '1px 6px', borderRadius: 10, fontWeight: 800 }}>24/7 ER</span>}
-                      <span style={{ fontSize: 9, background: '#f0fdf4', color: '#16a34a', border: '1px solid #86efac', padding: '1px 5px', borderRadius: 10, fontWeight: 700 }}>OSM Verified</span>
+                      {h.emergency && <span style={{ fontSize: 9, background: '#fef2f2', color: '#dc2626', border: '1px solid #fca5a5', padding: '1px 5px', borderRadius: 10, fontWeight: 800 }}>24/7 ER</span>}
                     </div>
-                    {h.phone && h.phone !== 'Not available' && <p style={{ fontSize: 11, color: '#0e64ff', margin: '0 0 4px' }}>📞 {h.phone}</p>}
-                    {h.openingHours && h.openingHours !== 'Not available' && <p style={{ fontSize: 11, color: '#475569', margin: '0 0 6px' }}>🕐 {h.openingHours}</p>}
                     <div style={{ display: 'flex', gap: 5 }}>
                       <button
-                        style={{ flex: 1, background: '#0e64ff', color: 'white', border: 'none', borderRadius: 8, padding: '7px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                        style={{ flex: 1, background: '#0e64ff', color: 'white', border: 'none', borderRadius: 6, padding: '6px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
                         onClick={() => navigate('/hospitals/' + h.id)}
-                      >View Profile</button>
+                      >View Details</button>
                       <button
-                        style={{ flex: 1, background: '#f8fafc', color: '#0f172a', border: '1px solid #e2e8f0', borderRadius: 8, padding: '7px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
+                        style={{ flex: 1, background: '#f8fafc', color: '#0f172a', border: '1px solid #e2e8f0', borderRadius: 6, padding: '6px', fontSize: 11, fontWeight: 800, cursor: 'pointer' }}
                         onClick={() => {
                           if (userLocation && lat && lng) {
                             window.open(`https://www.openstreetmap.org/directions?engine=fossgis_osrm_car&route=${userLocation.lat},${userLocation.lng};${lat},${lng}`, '_blank');
@@ -780,19 +786,18 @@ export default function HospitalFinder() {
         </MapContainer>
       </div>
 
-      {/* ── LAYER 2: FLOATING TOP COMMAND BAR ───────────────────────────────── */}
+      {/* ── LAYER 2: FLOATING TOP COMMAND CONTROLS ──────────────────────────── */}
       <div style={{
         position: 'absolute', top: 16, left: 16, right: 16, zIndex: 500,
         display: 'flex', flexDirection: 'column', gap: 10, pointerEvents: 'none',
       }}>
-        {/* Row 1: Location pill + Search + GPS + Emergency */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', pointerEvents: 'auto' }}>
           
-          {/* Location pill */}
+          {/* Location Chip */}
           <div style={{
-            background: 'rgba(8,15,30,0.88)', backdropFilter: 'blur(20px) saturate(1.8)',
-            border: '1px solid rgba(255,255,255,0.1)', padding: '8px 14px',
-            borderRadius: 20, boxShadow: '0 8px 28px rgba(0,0,0,0.2)',
+            background: 'rgba(8,15,30,0.92)', backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255,255,255,0.1)', padding: '7px 14px',
+            borderRadius: 20, boxShadow: '0 8px 28px rgba(0,0,0,0.25)',
             display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0,
           }}>
             <MapPin size={14} color="var(--primary)" />
@@ -813,16 +818,16 @@ export default function HospitalFinder() {
 
           {/* Search bar */}
           <div style={{
-            flex: 1, minWidth: 240, maxWidth: 500,
-            background: 'rgba(8,15,30,0.88)', backdropFilter: 'blur(24px) saturate(2)',
+            flex: 1, minWidth: 240, maxWidth: 480,
+            background: 'rgba(8,15,30,0.92)', backdropFilter: 'blur(24px)',
             border: '1.5px solid rgba(14,100,255,0.3)', borderRadius: 22,
-            padding: '6px 8px 6px 14px', boxShadow: '0 12px 36px rgba(0,0,0,0.2)',
+            padding: '6px 8px 6px 14px', boxShadow: '0 12px 36px rgba(0,0,0,0.25)',
             display: 'flex', alignItems: 'center', gap: 10,
           }}>
             <Search size={15} color="var(--primary)" />
             <input
               type="text"
-              placeholder="Search by name, city, specialization…"
+              placeholder="Search by hospital name, city, specialization…"
               value={search}
               onChange={e => setSearch(e.target.value)}
               style={{
@@ -851,7 +856,7 @@ export default function HospitalFinder() {
             </button>
           </div>
 
-          {/* 24/7 Emergency toggle */}
+          {/* 24/7 ER Toggle */}
           <button
             onClick={() => { setEmergencyOnly(p => !p); if (!emergencyOnly) toast.error('🚨 Emergency 24/7 Only'); }}
             style={{
@@ -867,7 +872,7 @@ export default function HospitalFinder() {
             <Activity size={14} /> {emergencyOnly ? 'ER Active' : '24/7 SOS'}
           </button>
 
-          {/* Refresh button */}
+          {/* Refresh OSM button */}
           <button
             onClick={() => runDiscovery(selectedCity, selectedState, userLocation, true)}
             disabled={isSearching}
@@ -884,7 +889,7 @@ export default function HospitalFinder() {
           </button>
         </div>
 
-        {/* Row 2: Expanded Filters */}
+        {/* Expanded Filters */}
         <AnimatePresence>
           {filtersOpen && (
             <motion.div
@@ -893,9 +898,9 @@ export default function HospitalFinder() {
               exit={{ opacity: 0, y: -8, scale: 0.98 }}
               style={{
                 pointerEvents: 'auto',
-                background: 'rgba(8,15,30,0.92)', backdropFilter: 'blur(24px) saturate(2)',
-                border: '1px solid rgba(255,255,255,0.08)', borderRadius: 18,
-                padding: '12px 16px', boxShadow: '0 16px 40px rgba(0,0,0,0.25)',
+                background: 'rgba(8,15,30,0.95)', backdropFilter: 'blur(24px)',
+                border: '1px solid rgba(255,255,255,0.1)', borderRadius: 18,
+                padding: '12px 16px', boxShadow: '0 16px 40px rgba(0,0,0,0.3)',
                 display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center',
               }}
             >
@@ -933,72 +938,42 @@ export default function HospitalFinder() {
                 <option value="name">Sort: Name A–Z</option>
               </select>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#f59e0b' }}>
-                <input type="checkbox" checked={open24x7Only} onChange={e => setOpen24x7Only(e.target.checked)} />
-                24/7 Only
-              </label>
-
               <button onClick={resetFilters} style={{ background: 'rgba(239,68,68,0.1)', color: '#ef4444', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 12, padding: '7px 12px', fontSize: 12, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <X size={12} /> Reset All
+                <X size={12} /> Reset
               </button>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* ── LAYER 3: RIGHT PANEL — Hospital Cards ───────────────────────────── */}
+      {/* ── LAYER 3: RIGHT PANEL — Compact Hospital Cards List ──────────────── */}
       <div style={{
-        position: 'absolute', top: 80, right: 16, bottom: 16,
-        width: 370, zIndex: 500, display: 'flex', flexDirection: 'column', gap: 10, pointerEvents: 'none',
+        position: 'absolute', top: 76, right: 16, bottom: 16,
+        width: 350, zIndex: 500, display: 'flex', flexDirection: 'column', gap: 10, pointerEvents: 'none',
       }}>
-        {/* Panel Header */}
+        {/* Header */}
         <div style={{
           pointerEvents: 'auto',
-          background: 'rgba(8,15,30,0.9)', backdropFilter: 'blur(20px) saturate(1.8)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'rgba(8,15,30,0.92)', backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: 16, padding: '10px 14px',
-          boxShadow: '0 8px 28px rgba(0,0,0,0.2)',
+          boxShadow: '0 8px 28px rgba(0,0,0,0.25)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Building2 size={16} color="var(--primary)" />
             <span style={{ fontSize: 13, fontWeight: 800, fontFamily: 'Outfit,sans-serif', color: 'var(--text-primary)' }}>
-              {filteredHospitals.length} Hospital{filteredHospitals.length !== 1 ? 's' : ''} Found
+              {filteredHospitals.length} Hospital{filteredHospitals.length !== 1 ? 's' : ''} Discovered
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            {discoveryStatus === 'success' && (
-              <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 12, background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <Wifi size={10} /> OSM Live
-              </span>
-            )}
-            {discoveryStatus === 'fallback' && (
-              <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 12, background: 'rgba(245,158,11,0.15)', color: '#f59e0b', border: '1px solid rgba(245,158,11,0.25)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <WifiOff size={10} /> Cached
-              </span>
-            )}
-            {discoveryStatus === 'searching' && (
-              <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 12, background: 'rgba(14,100,255,0.15)', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: 4 }}>
-                <RefreshCw size={10} style={{ animation: 'spin 1s linear infinite' }} /> Discovering…
-              </span>
-            )}
-          </div>
+          {discoveryStatus === 'success' && (
+            <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 8px', borderRadius: 12, background: 'rgba(16,185,129,0.15)', color: '#10b981', border: '1px solid rgba(16,185,129,0.25)', display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Wifi size={10} /> OSM Live
+            </span>
+          )}
         </div>
 
-        {/* Status / Verify bar */}
-        {lastVerified && (
-          <div style={{
-            pointerEvents: 'auto',
-            background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)',
-            borderRadius: 12, padding: '6px 12px', fontSize: 10,
-            color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6,
-          }}>
-            <CheckCircle2 size={11} color="#10b981" />
-            Last verified: {new Date(lastVerified).toLocaleTimeString()} · Source: OpenStreetMap Overpass API
-          </div>
-        )}
-
-        {/* Scrollable Cards */}
+        {/* List */}
         <div
           style={{
             pointerEvents: 'auto', flex: 1, overflowY: 'auto',
@@ -1012,55 +987,36 @@ export default function HospitalFinder() {
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 style={{
-                  background: 'rgba(14,100,255,0.06)', border: '1px dashed rgba(14,100,255,0.2)',
-                  borderRadius: 18, padding: '30px 20px', textAlign: 'center',
+                  background: 'rgba(14,100,255,0.06)', border: '1px dashed rgba(14,100,255,0.25)',
+                  borderRadius: 16, padding: '24px 16px', textAlign: 'center',
                 }}
               >
-                <RefreshCw size={32} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary)', margin: '0 auto 12px' }} />
-                <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px' }}>
-                  Querying OpenStreetMap Overpass API
+                <RefreshCw size={28} style={{ animation: 'spin 1s linear infinite', color: 'var(--primary)', margin: '0 auto 10px' }} />
+                <p style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 2px' }}>
+                  Discovering OpenStreetMap Hospitals
                 </p>
                 <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>
-                  Discovering verified hospitals near {locationLabel}…
+                  Querying Overpass API around {locationLabel}…
                 </p>
               </motion.div>
             )}
 
-            {!isSearching && discoveryError && (
-              <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                style={{
-                  background: 'rgba(239,68,68,0.06)', border: '1px dashed rgba(239,68,68,0.25)',
-                  borderRadius: 18, padding: '24px 20px', textAlign: 'center',
-                }}
-              >
-                <WifiOff size={32} style={{ color: '#ef4444', margin: '0 auto 12px' }} />
-                <p style={{ fontSize: 13, fontWeight: 800, color: '#ef4444', margin: '0 0 8px' }}>
-                  Discovery unavailable
-                </p>
-                <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 12px' }}>{discoveryError}</p>
-                <button onClick={() => runDiscovery(selectedCity, selectedState, userLocation)} className="btn btn-primary btn-sm">
-                  Try Again
-                </button>
-              </motion.div>
-            )}
-
-            {!isSearching && !discoveryError && filteredHospitals.length === 0 && (
+            {!isSearching && filteredHospitals.length === 0 && (
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 style={{
                   background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.1)',
-                  borderRadius: 18, padding: '30px 20px', textAlign: 'center',
+                  borderRadius: 16, padding: '24px 16px', textAlign: 'center',
                 }}
               >
-                <Building2 size={36} style={{ opacity: 0.25, margin: '0 auto 10px' }} />
+                <Building2 size={32} style={{ opacity: 0.3, margin: '0 auto 8px' }} />
                 <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px' }}>
                   No hospitals found in this area
                 </p>
-                <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 12px' }}>
-                  {search || selectedType || emergencyOnly ? 'Try clearing your filters.' : 'Try a different city or increase your search radius.'}
+                <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 10px' }}>
+                  Try clearing your search query or selecting another city.
                 </p>
-                {(search || selectedType || selectedSpecialist || emergencyOnly) && (
+                {search && (
                   <button onClick={resetFilters} className="btn btn-outline btn-sm">
                     Clear Filters
                   </button>
@@ -1082,10 +1038,10 @@ export default function HospitalFinder() {
         </div>
       </div>
 
-      {/* ── LAYER 4: INSPECTOR PANEL (floats bottom-left when hospital selected) */}
+      {/* ── LAYER 4: COMPACT SPATIAL INSPECTOR PANEL (Selected Hospital) ────── */}
       <AnimatePresence>
         {selectedHospital && (
-          <InspectorPanel
+          <CompactSpatialInspector
             hospital={selectedHospital}
             userLocation={userLocation}
             onClose={() => setSelectedHospital(null)}
@@ -1097,14 +1053,7 @@ export default function HospitalFinder() {
         @keyframes spin { to { transform: rotate(360deg); } }
         .animate-spin { animation: spin 1s linear infinite; }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(14,100,255,0.3); border-radius: 99px; }
-        @media (max-width: 900px) {
-          .hospital-right-panel {
-            top: auto !important; left: 10px !important; right: 10px !important;
-            bottom: 10px !important; width: auto !important; height: 260px !important;
-          }
-        }
       `}</style>
     </div>
   );
