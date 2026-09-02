@@ -1,4 +1,4 @@
-// Production Firebase Authentication & Services for LifeLink Platform
+// Official Firebase Authentication & Services for LifeLink Platform (Project: lifelink-ced2f)
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import {
   getAuth,
@@ -14,25 +14,29 @@ import {
 
 export const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "lifelink-ced2f.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "lifelink-ced2f",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "lifelink-ced2f.appspot.com",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "1035542898701",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1035542898701:web:lifelinkced2fapp",
 };
 
-if (!import.meta.env.VITE_FIREBASE_API_KEY) {
-  console.warn('[Firebase Auth] VITE_FIREBASE_API_KEY environment variable is missing in .env');
+// Safe Runtime Diagnostics for Development Verification
+if (typeof window !== 'undefined') {
+  console.log("Firebase Configuration Diagnostics:", {
+    projectId: firebaseConfig.projectId,
+    authDomain: firebaseConfig.authDomain,
+    hasApiKey: Boolean(firebaseConfig.apiKey),
+    apiKeyPrefix: firebaseConfig.apiKey ? firebaseConfig.apiKey.substring(0, 6) + "..." : "EMPTY (Missing in .env)",
+    apiKeyLength: firebaseConfig.apiKey ? firebaseConfig.apiKey.length : 0,
+    hasAppId: Boolean(firebaseConfig.appId),
+  });
 }
 
 // Initialize Firebase App instance
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig.apiKey ? firebaseConfig : {
+  ...firebaseConfig,
   apiKey: "AIzaSyDummyKeyForProductionAuth12345",
-  authDomain: "lifelink-healthcare.firebaseapp.com",
-  projectId: "lifelink-healthcare",
-  storageBucket: "lifelink-healthcare.appspot.com",
-  messagingSenderId: "10987654321",
-  appId: "1:10987654321:web:1234567890abcdef",
 });
 
 export const authInstance = getAuth(app);
